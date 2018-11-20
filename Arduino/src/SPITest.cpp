@@ -9,8 +9,8 @@
 #include <Arduino.h>
 #include <mrf24j.h>
 
-const int pin_reset = 6;
-const int pin_cs = 10;        // default CS pin on ATmega8/168/328
+const int pin_reset = 8;
+const int pin_cs = 6;        // default CS pin on ATmega8/168/328
 const int pin_interrupt = 2;  // default interrupt pin on ATmega8/168/328
 
 // Functions headers
@@ -32,7 +32,7 @@ void setup() {
 
     Serial.println("\nRealizando test de lectura y escritura...");
 
-    size_t count = 50;
+    size_t count = 100;
     unsigned int testDuration = millis();
     for (size_t i = 0; i < count; i++) {
         mrf.reset();
