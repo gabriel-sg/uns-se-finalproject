@@ -170,7 +170,7 @@ void Mrf24j::init(void) {
     }
     */
 
-    Serial.begin(9600);
+    //Serial.begin(9600);
 
     write_short(MRF_PACON2, 0x98); // – Initialize FIFOEN = 1 and TXONTS = 0x6.
     write_short(MRF_TXSTBL, 0x95); // – Initialize RFSTBL = 0x9.
@@ -209,9 +209,10 @@ void Mrf24j::interrupt_handler(void) {
         flag_got_rx++;
         // read out the packet data...
         
-        Serial.print("panid: 0x"); Serial.print(read_long(0x305), HEX); Serial.print(read_long(0x304), HEX); Serial.println();
-        Serial.print("addr_2: 0x"); Serial.print(read_long(0x307), HEX); Serial.print(read_long(0x306), HEX); Serial.println();
-        Serial.print("addr_3: 0x"); Serial.print(read_long(0x309), HEX); Serial.print(read_long(0x308), HEX); Serial.println();
+        //Serial.print("panid: 0x"); Serial.print(read_long(0x305), HEX); Serial.print(read_long(0x304), HEX); Serial.println();
+        //Serial.print("addr_2: 0x"); Serial.print(read_long(0x307), HEX); Serial.print(read_long(0x306), HEX); Serial.println();
+        //Serial.print("addr_3: 0x"); Serial.print(read_long(0x309), HEX); Serial.print(read_long(0x308), HEX); Serial.println();
+        // Pongo un comentario
 
         noInterrupts();
         rx_disable();
