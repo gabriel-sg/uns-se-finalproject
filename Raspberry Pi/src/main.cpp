@@ -22,7 +22,7 @@ const int spi_channel = 0;
 Mrf24j mrf(pin_reset, pin_cs, pin_interrupt, spi_channel);
 
 long last_time;
-long tx_interval = 1000;
+long tx_interval = 2000;
 
 int main() {
     mrf.reset();
@@ -33,13 +33,16 @@ int main() {
     mrf.address16_write(0x6001);
 
     // uncomment if you want to receive any packet on this channel
-    //mrf.set_promiscuous(true);
+    mrf.set_promiscuous(false);
 
     // uncomment if you want to enable PA/LNA external control
     mrf.set_palna(true);
 
     // uncomment if you want to buffer all PHY Payload
     //mrf.set_bufferPHY(true);
+
+    // Set interrupt edge rising. (default = falling)
+    //mrf.write_long(MRF_SLPCON0, 0b00000010);
 
     wiringPiISR (pin_interrupt, INT_EDGE_FALLING, &interrupt_routine) ;
 
@@ -50,7 +53,9 @@ int main() {
         if (current_time - last_time > tx_interval) {
             last_time = current_time;
             printf("txxxing...\n");
-            mrf.send16(0x6002, "abcd");
+            mrf.send16(0x6010, "abcd");
+            delay(1000);
+            mrf.send16(0x6003, "pepe");
         }
     }
     return 0;
@@ -76,6 +81,7 @@ void handle_rx() {
     printf("\r\nASCII data (relevant data):\n");
     for (int i = 0; i < mrf.rx_datalength(); i++) {
         //Serial.write(mrf.get_rxinfo()->rx_data[i]);
+        printf("%c", mrf.get_rxinfo()->rx_data[i]);
     }
 
     printf("\r\nLQI/RSSI=");
