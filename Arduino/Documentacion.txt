@@ -1,5 +1,11 @@
-Raspberry Pi:
-
+Arduino:
+    - No necesitamos una fuente extra de 3.3V, con la alimentación de Arduino alcanza.
+    - Test de alcance realizado con KristiNote. OK
+        * Max 40 mts aprox. (con paredes en el medio).
+    - Test de LQI (Link Quality Indicator) y RSSI (Received Signal Strength Indicator).
+        * Recipiente Test OK.
+        * Ollas Essen Test OK.
+    
 
 
 MRF24J40:
@@ -14,6 +20,7 @@ MRF24J40:
         to provide a high-impedance signal to the SPI bus. See Section 4.4 “MRF24J40 Schematic and
         Bill of Materials”for an example application circuit.
 
+    - Los cambios en los módulos MRF24J40 tardan unos minutos en reflejar.
+
 Tener conectado CS y RST con los pines de la libreria sino no funciona al arrancar.
 No usar CS directo a tierra y/o RST a VCC.
-

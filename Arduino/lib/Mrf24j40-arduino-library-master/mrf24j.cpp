@@ -189,7 +189,7 @@ void Mrf24j::init(void) {
     write_short(MRF_CCAEDTH, 0x60); // – Set CCA ED threshold.
     write_short(MRF_BBREG6, 0x40); // – Set appended RSSI value to RXFIFO.
     set_interrupts();
-    set_channel(12);
+    set_channel(18);
     // max power is by default.. just leave it...
     // Set transmitter power - See “REGISTER 2-62: RF CONTROL 3 REGISTER (ADDRESS: 0x203)”.
     write_short(MRF_RFCTL, 0x04); //  – Reset RF state machine.
@@ -212,7 +212,6 @@ void Mrf24j::interrupt_handler(void) {
         //Serial.print("panid: 0x"); Serial.print(read_long(0x305), HEX); Serial.print(read_long(0x304), HEX); Serial.println();
         //Serial.print("addr_2: 0x"); Serial.print(read_long(0x307), HEX); Serial.print(read_long(0x306), HEX); Serial.println();
         //Serial.print("addr_3: 0x"); Serial.print(read_long(0x309), HEX); Serial.print(read_long(0x308), HEX); Serial.println();
-        // Pongo un comentario
 
         noInterrupts();
         rx_disable();

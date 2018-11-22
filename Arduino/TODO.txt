@@ -1,0 +1,8 @@
+
+    * Mail a José / Andrés. Consultar sensores / actuadores.
+    * Definir protocolo comunicación.
+        <sensid,rw,datatype,value>
+    * Decisión de diseño
+        Los nodos envían información sin necesidad de ser solicitada por el coordinador
+        El coordinador recibe éstos datos y se encarga de almacenarlos en la base de datos.
+        El coordinador puede indicar directivas (recibidas de la base de datos) a los nodos a fin de accionar actuadores.
