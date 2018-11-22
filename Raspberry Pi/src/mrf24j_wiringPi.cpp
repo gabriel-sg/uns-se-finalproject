@@ -278,8 +278,8 @@ void Mrf24j::interrupt_handler(void) {
         tx_info.retries = tmp >> 6;
         tx_info.channel_busy = (tmp & (1 << CCAFAIL));
     }
-    printf("ocurrio una interrupcion\n");
-    fflush(stdout);
+    // printf("ocurrio una interrupcion\n");
+    // fflush(stdout);
 }
 
 

@@ -38,6 +38,8 @@ int main() {
     // uncomment if you want to enable PA/LNA external control
     mrf.set_palna(true);
 
+    mrf.set_channel(18);
+
     // uncomment if you want to buffer all PHY Payload
     //mrf.set_bufferPHY(true);
 
@@ -53,9 +55,9 @@ int main() {
         if (current_time - last_time > tx_interval) {
             last_time = current_time;
             printf("txxxing...\n");
-            mrf.send16(0x6010, "abcd");
-            delay(1000);
-            mrf.send16(0x6003, "pepe");
+            mrf.send16(0x6005, "abcd");
+            // delay(1000);
+            // mrf.send16(0x6003, "pepe");
         }
     }
     return 0;
