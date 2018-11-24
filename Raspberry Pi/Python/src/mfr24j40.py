@@ -191,10 +191,14 @@ class Mrf24j:
         self.spi_handler = self.pi.spi_open(0, 500000, 0) # channel 0 (not use), 500 Kbps, mode 0
 
     def reset(self):
+        self.pi.write(self._pin_reset,pigpio.LOW)
+        time.sleep(0.002)
+        self.pi.write(self._pin_reset,pigpio.HIGH)
+        time.sleep(0.002)
         return 0
 
     def spi_transfer(self, byte):
-        byte = byte & 255 # truncado a 8 bits
+        byte = byte & 255           # truncado a 8 bits
         rx_tuple = self.pi.spi_xfer(self.spi_handler, [byte])
         return rx_tuple[1][0]
 
@@ -349,8 +353,9 @@ class Mrf24j:
         i += 1
 
         i += self.ignoreBytes
+        d_send = data.encode()
         for q in range(0,data_len):
-            self.write_long(i, data[q])
+            self.write_long(i, d_send[q])
             i += 1
 
         self.write_short(MRF_TXNCON, (1<<MRF_TXNACKREQ | 1<<MRF_TXNTRIG))
@@ -369,7 +374,6 @@ class Mrf24j:
                 for i in range(0,frame_length):
                     self.rx_buf[rb_ptr] = self.read_long(0x301 + i)
                     rb_ptr += 1
-
 
             rd_ptr = 0
             for i in range(0,self.rx_datalength()):
@@ -391,9 +395,11 @@ class Mrf24j:
 
     def check_flags(self,rx_handler, tx_handler):
         if (self.flag_got_rx):
-            flag_got_rx = 0
+            print("flag_got_rx")
+            self.flag_got_rx = 0
             rx_handler()
         elif (self.flag_got_tx):
-            flag_got_tx = 0
+            print("flag_got_tx")
+            self.flag_got_tx = 0
             tx_handler()
 
