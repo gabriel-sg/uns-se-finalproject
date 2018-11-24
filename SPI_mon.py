@@ -156,8 +156,6 @@ def cbf(gpio, level, tick):
 
 pi = pigpio.pi()
 
-
-
 if not pi.connected:
    exit()
 
