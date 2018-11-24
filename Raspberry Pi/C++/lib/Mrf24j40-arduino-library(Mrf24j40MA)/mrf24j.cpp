@@ -38,7 +38,7 @@ Mrf24j::Mrf24j(int pin_reset, int pin_chip_select, int pin_interrupt) {
     pinMode(_pin_cs, OUTPUT);
     pinMode(_pin_int, INPUT);
 
-    SPI.setBitOrder(MSBFIRST) ;
+    SPI.setBitOrder(MSBFIRST);
     SPI.setDataMode(SPI_MODE0);
     SPI.begin();
 }
