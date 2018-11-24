@@ -2,7 +2,7 @@ import os
 import pigpio
 import time
 
-#Constantes
+# Constantes
 
 MRF_RXMCR = 0x00
 MRF_PANIDL = 0x01
@@ -18,8 +18,8 @@ MRF_EADR5 = 0x0A
 MRF_EADR6 = 0x0B
 MRF_EADR7 = 0x0C
 MRF_RXFLUSH = 0x0D
-#MRF_Reserved = 0x0E
-#MRF_Reserved = 0x0F
+# MRF_Reserved = 0x0E
+# MRF_Reserved = 0x0F
 MRF_ORDER = 0x10
 MRF_TXMCR = 0x11
 MRF_ACKTMOUT = 0x12
@@ -29,16 +29,16 @@ MRF_SYMTICKH = 0x15
 MRF_PACON0 = 0x16
 MRF_PACON1 = 0x17
 MRF_PACON2 = 0x18
-#MRF_Reserved = 0x19
+# MRF_Reserved = 0x19
 MRF_TXBCON0 = 0x1A
 
-#TXNCON: TRANSMIT NORMAL FIFO CONTROL REGISTER (ADDRESS: 0x1B)
+# TXNCON: TRANSMIT NORMAL FIFO CONTROL REGISTER (ADDRESS: 0x1B)
 MRF_TXNCON = 0x1B
-MRF_TXNTRIG   = 0
-MRF_TXNSECEN  = 1
+MRF_TXNTRIG = 0
+MRF_TXNSECEN = 1
 MRF_TXNACKREQ = 2
-MRF_INDIRECT  = 3
-MRF_FPSTAT    = 4
+MRF_INDIRECT = 3
+MRF_FPSTAT = 4
 
 MRF_TXG1CON = 0x1C
 MRF_TXG2CON = 0x1D
@@ -48,16 +48,16 @@ MRF_ESLOTG67 = 0x20
 MRF_TXPEND = 0x21
 MRF_WAKECON = 0x22
 MRF_FRMOFFSET = 0x23
-#TXSTAT: TX MAC STATUS REGISTER (ADDRESS: 0x24)
+# TXSTAT: TX MAC STATUS REGISTER (ADDRESS: 0x24)
 MRF_TXSTAT = 0x24
-TXNRETRY1     = 7
-TXNRETRY0     = 6
-CCAFAIL       = 5
-TXG2FNT       = 4
-TXG1FNT       = 3
-TXG2STAT      = 2
-TXG1STAT      = 1
-TXNSTAT       = 0
+TXNRETRY1 = 7
+TXNRETRY0 = 6
+CCAFAIL = 5
+TXG2FNT = 4
+TXG1FNT = 3
+TXG2STAT = 2
+TXG1STAT = 1
+TXNSTAT = 0
 
 MRF_TXBCON1 = 0x25
 MRF_GATECLK = 0x26
@@ -65,11 +65,11 @@ MRF_TXTIME = 0x27
 MRF_HSYMTMRL = 0x28
 MRF_HSYMTMRH = 0x29
 MRF_SOFTRST = 0x2A
-#MRF_Reserved = 0x2B
+# MRF_Reserved = 0x2B
 MRF_SECCON0 = 0x2C
 MRF_SECCON1 = 0x2D
 MRF_TXSTBL = 0x2E
-#MRF_Reserved = 0x2F
+# MRF_Reserved = 0x2F
 MRF_RXSR = 0x30
 MRF_INTSTAT = 0x31
 MRF_INTCON = 0x32
@@ -83,7 +83,7 @@ MRF_BBREG1 = 0x39
 MRF_BBREG2 = 0x3A
 MRF_BBREG3 = 0x3B
 MRF_BBREG4 = 0x3C
-#MRF_Reserved = 0x3D
+# MRF_Reserved = 0x3D
 MRF_BBREG6 = 0x3E
 MRF_CCAEDTH = 0x3F
 
@@ -143,6 +143,7 @@ MRF_I_TXNIF = 0b00000001
 #     uint8_t rssi;
 # } rx_info_t;
 
+
 class rx_info_t:
     def __init__(self):
         self.frame_length = 0
@@ -150,11 +151,13 @@ class rx_info_t:
         self.lqi = 0
         self.rssi = 0
 
+
 class tx_info_t:
     def __init__(self):
         self.tx_ok = 1
         self.retries = 2
         self.channel_busy = 1
+
 
 class Mrf24j:
 
@@ -175,25 +178,60 @@ class Mrf24j:
     tx_info = tx_info_t()
 
     pi = pigpio.pi()
-
     if not pi.connected:
         exit()
-    
-    def __init__(self,pin_reset, pin_chip_select, pin_interrupt):
-        
+    def __init__(self, pin_reset, pin_chip_select, pin_interrupt):
         self._pin_reset = pin_reset
         self._pin_cs = pin_chip_select
         self._pin_int = pin_interrupt
-
         self.pi.set_mode(self._pin_reset,pigpio.OUTPUT)
         self.pi.set_mode(self._pin_cs,pigpio.OUTPUT)
         self.pi.set_mode(self._pin_int,pigpio.INPUT)
 
+        self.spi_handler = self.pi.spi_open(0, 500000, 0) # channel 0 (not use), 500 Kbps, mode 0
+
     def reset(self):
         return 0
-        
+
+    def spi_transfer(self, byte):
+        byte = byte & 255 # truncado a 8 bits
+        rx_tuple = self.pi.spi_xfer(self.spi_handler, [byte])
+        return rx_tuple[1][0]
+
+    def read_short(self, address):
+        self.pi.write(self._pin_cs, pigpio.LOW)
+        self.spi_transfer(address << 1 & 0b01111110)
+        ret = self.spi_transfer(0)
+        self.pi.write(self._pin_cs, pigpio.HIGH)
+        return ret
+
+    def read_long(self, address):
+        self.pi.write(self._pin_cs, pigpio.LOW)
+        ahigh = address >> 3
+        alow = address << 5
+        self.spi_transfer(0x80 | ahigh)
+        self.spi_transfer(alow)
+        ret = self.spi_transfer(0)
+        self.pi.write(self._pin_cs, pigpio.HIGH)
+        return ret
+
+    def write_short(self, address, data):
+        self.pi.write(self._pin_cs, pigpio.LOW)
+        self.spi_transfer((address<<1 & 0b01111110) | 0x01)
+        self.spi_transfer(data)
+        self.pi.write(self._pin_cs, pigpio.HIGH)
+
+    def write_long(self, address, data):
+        self.pi.write(self._pin_cs, pigpio.LOW)
+        ahigh = address >> 3
+        alow = address << 5
+        self.spi_transfer(0x80 | ahigh)
+        self.spi_transfer(alow | 0x10)
+        self.spi_transfer(data)
+        self.pi.write(self._pin_cs, pigpio.HIGH)
+
     def init(self):
-        
+
         self.write_short(MRF_PACON2, 0x98) # – Initialize FIFOEN = 1 and TXONTS = 0x6.
         self.write_short(MRF_TXSTBL, 0x95)# – Initialize RFSTBL = 0x9.
 
@@ -214,32 +252,6 @@ class Mrf24j:
         self.write_short(MRF_RFCTL, 0x04) #  – Reset RF state machine.
         self.write_short(MRF_RFCTL, 0x00) # part 2
         time.sleep(0.001) # delay at least 192usec
-    
-    def read_short(self,address):    # return uint8_t
-        self.pi.write(self._pin_cs,pigpio.OFF)
-
-
-        self.pi.write(self._pin_cs,pigpio.ON)
-        return 0
-
-    def read_long(self,address):     # return uint8_t
-        self.pi.write(self._pin_cs,pigpio.OFF)
-
-
-        self.pi.write(self._pin_cs,pigpio.ON)
-        return 0
-
-    def write_short(self,address, data):     # addr uint8_t
-        self.pi.write(self._pin_cs,pigpio.OFF)
-
-
-        self.pi.write(self._pin_cs,pigpio.ON)
-
-    def write_long(self,address, data):      # addr uint16_t
-        self.pi.write(self._pin_cs,pigpio.OFF)
-
-
-        self.pi.write(self._pin_cs,pigpio.ON)
 
     def get_pan(self):              # return uint16_t
         panh = self.read_short(MRF_PANIDH)
@@ -340,16 +352,16 @@ class Mrf24j:
         for q in range(0,data_len):
             self.write_long(i, data[q])
             i += 1
-        
+
         self.write_short(MRF_TXNCON, (1<<MRF_TXNACKREQ | 1<<MRF_TXNTRIG))
 
     def interrupt_handler(self):
         last_interrupt = self.read_short(MRF_INTSTAT)
         if (last_interrupt & MRF_I_RXIF):
             self.flag_got_rx += 1
-            
+
             self.rx_disable()
-            
+
             frame_length = self.read_long(0x300)
 
             if(self.bufPHY):
@@ -357,8 +369,8 @@ class Mrf24j:
                 for i in range(0,frame_length):
                     self.rx_buf[rb_ptr] = self.read_long(0x301 + i)
                     rb_ptr += 1
-            
-            
+
+
             rd_ptr = 0
             for i in range(0,self.rx_datalength()):
                 self.rx_info.rx_data[rd_ptr] = self.read_long(0x301 + self.bytes_MHR + i)
@@ -369,7 +381,7 @@ class Mrf24j:
             self.rx_info.rssi = self.read_long(0x301 + frame_length + 1)
 
             self.rx_enable()
-    
+
         if (last_interrupt & MRF_I_TXNIF):
             self.flag_got_tx += 1
             tmp = self.read_short(MRF_TXSTAT)

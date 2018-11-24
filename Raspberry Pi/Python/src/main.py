@@ -8,6 +8,7 @@ pin_cs = 12
 pin_interrupt = 20
 spi_channel = 0
 
+
 pi = pigpio.pi()
 if not pi.connected:
     exit()
