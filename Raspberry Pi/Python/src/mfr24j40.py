@@ -1,4 +1,6 @@
+import os
 import pigpio
+import time
 
 #Constantes
 
@@ -156,6 +158,22 @@ class tx_info_t:
 
 class Mrf24j:
 
+    rx_buf = []
+
+    bytes_MHR = 9
+    bytes_FCS = 2
+    bytes_nodata = bytes_MHR + bytes_FCS
+
+    ignoreBytes = 0
+
+    bufPHY = 0
+
+    flag_got_rx = 0
+    flag_got_tx = 0
+
+    rx_info = rx_info_t()
+    tx_info = tx_info_t()
+
     pi = pigpio.pi()
 
     if not pi.connected:
@@ -171,72 +189,199 @@ class Mrf24j:
         self.pi.set_mode(self._pin_cs,pigpio.OUTPUT)
         self.pi.set_mode(self._pin_int,pigpio.INPUT)
 
-    def reset():
-    def init():
+    def reset(self):
+        return 0
         
-        write_short(MRF_PACON2, 0x98) # – Initialize FIFOEN = 1 and TXONTS = 0x6.
-        write_short(MRF_TXSTBL, 0x95)# – Initialize RFSTBL = 0x9.
-
-        write_long(MRF_RFCON0, 0x03) # – Initialize RFOPT = 0x03.
-        write_long(MRF_RFCON1, 0x01) # – Initialize VCOOPT = 0x02.
-        write_long(MRF_RFCON2, 0x80) # – Enable PLL (PLLEN = 1).
-        write_long(MRF_RFCON6, 0x90) # – Initialize TXFIL = 1 and 20MRECVR = 1.
-        write_long(MRF_RFCON7, 0x80) # – Initialize SLPCLKSEL = 0x2 (100 kHz Internal oscillator).
-        write_long(MRF_RFCON8, 0x10) # – Initialize RFVCO = 1.
-        write_long(MRF_SLPCON1, 0x21) # – Initialize CLKOUTEN = 1 and SLPCLKDIV = 0x01.
-
-        write_short(MRF_BBREG2, 0x80) # Set CCA mode to ED
-        write_short(MRF_CCAEDTH, 0x60) # – Set CCA ED threshold.
-        write_short(MRF_BBREG6, 0x40) # – Set appended RSSI value to RXFIFO.
+    def init(self):
         
-        set_channel(12)
+        self.write_short(MRF_PACON2, 0x98) # – Initialize FIFOEN = 1 and TXONTS = 0x6.
+        self.write_short(MRF_TXSTBL, 0x95)# – Initialize RFSTBL = 0x9.
 
-        write_short(MRF_RFCTL, 0x04) #  – Reset RF state machine.
-        write_short(MRF_RFCTL, 0x00) # part 2
-        sleep(0.001) # delay at least 192usec
+        self.write_long(MRF_RFCON0, 0x03) # – Initialize RFOPT = 0x03.
+        self.write_long(MRF_RFCON1, 0x01) # – Initialize VCOOPT = 0x02.
+        self.write_long(MRF_RFCON2, 0x80) # – Enable PLL (PLLEN = 1).
+        self.write_long(MRF_RFCON6, 0x90) # – Initialize TXFIL = 1 and 20MRECVR = 1.
+        self.write_long(MRF_RFCON7, 0x80) # – Initialize SLPCLKSEL = 0x2 (100 kHz Internal oscillator).
+        self.write_long(MRF_RFCON8, 0x10) # – Initialize RFVCO = 1.
+        self.write_long(MRF_SLPCON1, 0x21) # – Initialize CLKOUTEN = 1 and SLPCLKDIV = 0x01.
 
-    byte read_short(byte address);
-    byte read_long(word address);
+        self.write_short(MRF_BBREG2, 0x80) # Set CCA mode to ED
+        self.write_short(MRF_CCAEDTH, 0x60) # – Set CCA ED threshold.
+        self.write_short(MRF_BBREG6, 0x40) # – Set appended RSSI value to RXFIFO.
 
-    void write_short(byte address, byte data);
-    void write_long(word address, byte data);
+        self.set_channel(12)
 
-    word get_pan(void);
-    void set_pan(word panid);
+        self.write_short(MRF_RFCTL, 0x04) #  – Reset RF state machine.
+        self.write_short(MRF_RFCTL, 0x00) # part 2
+        time.sleep(0.001) # delay at least 192usec
+    
+    def read_short(self,address):    # return uint8_t
+        self.pi.write(self._pin_cs,pigpio.OFF)
 
-    void address16_write(word address16);
-    word address16_read(void);
 
-    void set_interrupts(void);
+        self.pi.write(self._pin_cs,pigpio.ON)
+        return 0
 
-    void set_promiscuous(boolean enabled);
+    def read_long(self,address):     # return uint8_t
+        self.pi.write(self._pin_cs,pigpio.OFF)
 
-    void set_channel(byte channel);
 
-    void rx_enable(void);
-    void rx_disable(void);
+        self.pi.write(self._pin_cs,pigpio.ON)
+        return 0
 
-    void rx_flush(void);
+    def write_short(self,address, data):     # addr uint8_t
+        self.pi.write(self._pin_cs,pigpio.OFF)
 
-    rx_info_t * get_rxinfo(void);
 
-    tx_info_t * get_txinfo(void);
+        self.pi.write(self._pin_cs,pigpio.ON)
 
-    uint8_t * get_rxbuf(void);
+    def write_long(self,address, data):      # addr uint16_t
+        self.pi.write(self._pin_cs,pigpio.OFF)
 
-    int rx_datalength(void);
 
-    void set_ignoreBytes(int ib);
+        self.pi.write(self._pin_cs,pigpio.ON)
 
-    void set_bufferPHY(boolean bp);
+    def get_pan(self):              # return uint16_t
+        panh = self.read_short(MRF_PANIDH)
+        return panh << 8 | self.read_short(MRF_PANIDL)
 
-    boolean get_bufferPHY(void);
+    def set_pan(self,panid):         # panid uint16_t
+        self.write_short(MRF_PANIDH, panid >> 8)
+        self.write_short(MRF_PANIDL, panid & 0xff)
 
-    void set_palna(boolean enabled);
+    def address16_write(self,address16):     # addr uint16_t
+        self.write_short(MRF_SADRH, address16 >> 8)
+        self.write_short(MRF_SADRL, address16 & 0xff)
 
-    void send16(word dest16, char * data);
+    def address16_read(self):       # return uint16_t
+        a16h = self.read_short(MRF_SADRH)
+        return a16h << 8 | self.read_short(MRF_SADRL)
 
-    void interrupt_handler(void);
+    def set_interrupts(self):
+        self.write_short(MRF_INTCON, 0b11110110)
 
-    void check_flags(void (*rx_handler)(void), void (*tx_handler)(void));
+    def set_promiscuous(self,enabled):       # enables bool
+        if (enabled):
+            self.write_short(MRF_RXMCR, 0x01)
+        else:
+            self.write_short(MRF_RXMCR, 0x00)
+
+    def set_channel(self,channel):           # channel uint8_t
+        self.write_long(MRF_RFCON0, (((channel - 11) << 4) | 0x03))
+
+    def rx_enable(self):
+        self.write_short(MRF_BBREG1, 0x00)
+
+    def rx_disable(self):
+        self.write_short(MRF_BBREG1, 0x04)
+
+    def rx_flush(self):
+        self.write_short(MRF_RXFLUSH, 0x01)
+
+    def get_rxinfo(self):           # return rx_info_t *
+        return self.rx_info
+
+    def get_txinfo(self):           # return tx_info_t *
+        return self.tx_info
+
+    def get_rxbuf(self):            # return uint8_t *
+        return self.rx_buf
+
+    def  rx_datalength(self):        # return int
+        return self.rx_info.frame_length - self.bytes_nodata
+
+    def set_ignoreBytes(self,ib):    # ib int
+        self.ignoreBytes = ib
+
+    def set_bufferPHY(self,bp):      # bp bool
+        self.bufPHY = bp
+
+    def get_bufferPHY(self):        # return bool
+        return self.bufPHY
+
+    def set_palna(self,enabled):     # enabled bool
+        if (enabled):
+            self.write_long(MRF_TESTMODE, 0x07)
+        else:
+            self.write_long(MRF_TESTMODE, 0x00)
+
+    def send16(self,dest16, data):   # dest16 uint16_t,
+        data_len = len(data)
+        i = 0
+        self.write_long(i, self.bytes_MHR)
+        i += 1
+        self.write_long(i, self.bytes_MHR + self.ignoreBytes + data_len)
+        i += 1
+        self.write_long(i, 0b01100001)
+        i += 1
+        self.write_long(i, 0b10001000)
+        i += 1
+        self.write_long(i, 1)
+        i += 1
+
+        panid = self.get_pan()
+
+        self.write_long(i, panid & 0xff)
+        i += 1
+        self.write_long(i, panid >> 8)
+        i += 1
+        self.write_long(i, dest16 & 0xff)
+        i += 1
+        self.write_long(i, dest16 >> 8)
+        i += 1
+
+        src16 = self.address16_read()
+        self.write_long(i, src16 & 0xff)
+        i += 1
+        self.write_long(i, src16 >> 8)
+        i += 1
+
+        i += self.ignoreBytes
+        for q in range(0,data_len):
+            self.write_long(i, data[q])
+            i += 1
+        
+        self.write_short(MRF_TXNCON, (1<<MRF_TXNACKREQ | 1<<MRF_TXNTRIG))
+
+    def interrupt_handler(self):
+        last_interrupt = self.read_short(MRF_INTSTAT)
+        if (last_interrupt & MRF_I_RXIF):
+            self.flag_got_rx += 1
+            
+            self.rx_disable()
+            
+            frame_length = self.read_long(0x300)
+
+            if(self.bufPHY):
+                rb_ptr = 0
+                for i in range(0,frame_length):
+                    self.rx_buf[rb_ptr] = self.read_long(0x301 + i)
+                    rb_ptr += 1
+            
+            
+            rd_ptr = 0
+            for i in range(0,self.rx_datalength()):
+                self.rx_info.rx_data[rd_ptr] = self.read_long(0x301 + self.bytes_MHR + i)
+                rd_ptr += 1
+
+            self.rx_info.frame_length = frame_length
+            self.rx_info.lqi = self.read_long(0x301 + frame_length)
+            self.rx_info.rssi = self.read_long(0x301 + frame_length + 1)
+
+            self.rx_enable()
+    
+        if (last_interrupt & MRF_I_TXNIF):
+            self.flag_got_tx += 1
+            tmp = self.read_short(MRF_TXSTAT)
+            self.tx_info.tx_ok = not (tmp & ~(1 << TXNSTAT))
+            self.tx_info.retries = tmp >> 6
+            self.tx_info.channel_busy = (tmp & (1 << CCAFAIL))
+
+    def check_flags(self,rx_handler, tx_handler):
+        if (self.flag_got_rx):
+            flag_got_rx = 0
+            rx_handler()
+        elif (self.flag_got_tx):
+            flag_got_tx = 0
+            tx_handler()
 

@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "Arduino"
+		},
+		{
+			"path": "./Raspberry Pi"
+		}
+	],
+	"settings": {
+		"terminal.integrated.env.windows": {
+			"PATH": "C:\\Users\\Jere\\.platformio\\penv\\Scripts;C:\\Users\\Jere\\.platformio\\penv;C:\\Program Files (x86)\\Common Files\\Oracle\\Java\\javapath;C:\\ProgramData\\Oracle\\Java\\javapath;C:\\Program Files\\ImageMagick-7.0.1-Q16;C:\\Program Files (x86)\\AMD APP\\bin\\x86_64;C:\\Program Files (x86)\\AMD APP\\bin\\x86;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files (x86)\\Intel\\OpenCL SDK\\2.0\\bin\\x86;C:\\Program Files (x86)\\Intel\\OpenCL SDK\\2.0\\bin\\x64;C:\\Program Files (x86)\\ATI Technologies\\ATI.ACE\\Core-Static;C:\\Program Files\\Intel\\WiFi\\bin\\;C:\\Program Files\\Common Files\\Intel\\WirelessCommon\\;C:\\Program Files\\Microsoft SQL Server\\120\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\130\\Tools\\Binn\\;C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\;C:\\Windows\\system32\\config\\systemprofile\\.dnx\\bin;C:\\Program Files\\Microsoft DNX\\Dnvm\\;C:\\Program Files\\MySQL\\MySQL Utilities 1.6\\;C:\\Users\\Jere\\Desktop\\Thunderbird Portable - SS\\GnuPG\\pub;C:\\Program Files\\PuTTY\\;c:\\Program Files\\Java\\jdk1.8.0_101\\jre\\bin\\;c:\\Program Files\\Prolog\\bin\\;C:\\Program Files (x86)\\Windows Live\\Shared;C:\\SysGCC\\raspberry\\bin;C:\\Program Files\\Git\\cmd;c:\\Users\\Jere\\AppData\\Local\\Programs\\Python\\Python37;C:\\Program Files\\Intel\\WiFi\\bin\\;C:\\Program Files\\Common Files\\Intel\\WirelessCommon\\;C:\\Users\\Jere\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\intelFPGA_lite\\18.1\\modelsim_ase\\win32aloem;C:\\Users\\Jere\\AppData\\Local\\GitHubDesktop\\bin;C:\\SysGCC\\raspberry\\bin;c:\\Users\\Jere\\AppData\\Local\\Programs\\Python\\Python37;C:\\Program Files (x86)\\Common Files\\Oracle\\Java\\javapath;C:\\ProgramData\\Oracle\\Java\\javapath;C:\\Program Files\\ImageMagick-7.0.1-Q16;C:\\Program Files (x86)\\AMD APP\\bin\\x86_64;C:\\Program Files (x86)\\AMD APP\\bin\\x86;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Program Files (x86)\\Intel\\OpenCL SDK\\2.0\\bin\\x86;C:\\Program Files (x86)\\Intel\\OpenCL SDK\\2.0\\bin\\x64;C:\\Program Files (x86)\\ATI Technologies\\ATI.ACE\\Core-Static;C:\\Program Files\\Intel\\WiFi\\bin\\;C:\\Program Files\\Common Files\\Intel\\WirelessCommon\\;C:\\Program Files\\Microsoft SQL Server\\120\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\130\\Tools\\Binn\\;C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\;C:\\Windows\\system32\\config\\systemprofile\\.dnx\\bin;C:\\Program Files\\Microsoft DNX\\Dnvm\\;C:\\Program Files\\MySQL\\MySQL Utilities 1.6\\;C:\\Users\\Jere\\Desktop\\Thunderbird Portable - SS\\GnuPG\\pub;C:\\Program Files\\PuTTY\\;c:\\Program Files\\Java\\jdk1.8.0_101\\jre\\bin\\;c:\\Program Files\\Prolog\\bin\\;C:\\Program Files (x86)\\Windows Live\\Shared;C:\\SysGCC\\raspberry\\bin;C:\\Program Files\\Git\\cmd;c:\\Users\\Jere\\AppData\\Local\\Programs\\Python\\Python37;C:\\Program Files\\Intel\\WiFi\\bin\\;C:\\Program Files\\Common Files\\Intel\\WirelessCommon\\;C:\\Users\\Jere\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\intelFPGA_lite\\18.1\\modelsim_ase\\win32aloem;C:\\Users\\Jere\\AppData\\Local\\GitHubDesktop\\bin;C:\\SysGCC\\raspberry\\bin;c:\\Users\\Jere\\AppData\\Local\\Programs\\Python\\Python37",
+			"PLATFORMIO_CALLER": "vscode"
+		}
+	
+	}
+}
