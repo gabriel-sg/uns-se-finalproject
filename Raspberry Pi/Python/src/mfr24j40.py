@@ -188,8 +188,47 @@ class Mrf24j:
         self.pi.set_mode(self._pin_cs,pigpio.OUTPUT)
         self.pi.set_mode(self._pin_int,pigpio.INPUT)
 
+        self.spi_handler = self.pi.spi_open(0, 500000, 0) # channel 0 (not use), 500 Kbps, mode 0
+
     def reset(self):
         return 0
+
+    def spi_transfer(self, byte):
+        byte = byte & 255 # truncado a 8 bits
+        rx_tuple = self.pi.spi_xfer(self.spi_handler, [byte])
+        return rx_tuple[1][0]
+
+    def read_short(self, address):
+        self.pi.write(self._pin_cs, pigpio.LOW)
+        self.spi_transfer(address << 1 & 0b01111110)
+        ret = self.spi_transfer(0)
+        self.pi.write(self._pin_cs, pigpio.HIGH)
+        return ret
+
+    def read_long(self, address):
+        self.pi.write(self._pin_cs, pigpio.LOW)
+        ahigh = address >> 3
+        alow = address << 5
+        self.spi_transfer(0x80 | ahigh)
+        self.spi_transfer(alow)
+        ret = self.spi_transfer(0)
+        self.pi.write(self._pin_cs, pigpio.HIGH)
+        return ret
+
+    def write_short(self, address, data):
+        self.pi.write(self._pin_cs, pigpio.LOW)
+        self.spi_transfer((address<<1 & 0b01111110) | 0x01)
+        self.spi_transfer(data)
+        self.pi.write(self._pin_cs, pigpio.HIGH)
+
+    def write_long(self, address, data):
+        self.pi.write(self._pin_cs, pigpio.LOW)
+        ahigh = address >> 3
+        alow = address << 5
+        self.spi_transfer(0x80 | ahigh)
+        self.spi_transfer(alow | 0x10)
+        self.spi_transfer(data)
+        self.pi.write(self._pin_cs, pigpio.HIGH)
 
     def init(self):
 
@@ -213,32 +252,6 @@ class Mrf24j:
         self.write_short(MRF_RFCTL, 0x04) #  – Reset RF state machine.
         self.write_short(MRF_RFCTL, 0x00) # part 2
         time.sleep(0.001) # delay at least 192usec
-
-    def read_short(self,address):    # return uint8_t
-        self.pi.write(self._pin_cs,pigpio.OFF)
-
-
-        self.pi.write(self._pin_cs,pigpio.ON)
-        return 0
-
-    def read_long(self,address):     # return uint8_t
-        self.pi.write(self._pin_cs,pigpio.OFF)
-
-
-        self.pi.write(self._pin_cs,pigpio.ON)
-        return 0
-
-    def write_short(self,address, data):     # addr uint8_t
-        self.pi.write(self._pin_cs,pigpio.OFF)
-
-
-        self.pi.write(self._pin_cs,pigpio.ON)
-
-    def write_long(self,address, data):      # addr uint16_t
-        self.pi.write(self._pin_cs,pigpio.OFF)
-
-
-        self.pi.write(self._pin_cs,pigpio.ON)
 
     def get_pan(self):              # return uint16_t
         panh = self.read_short(MRF_PANIDH)

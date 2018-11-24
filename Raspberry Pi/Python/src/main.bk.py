@@ -3,27 +3,6 @@
 import time
 import pigpio
 
-# spi_open(spi_channel, baud, spi_flags)
-# pi.spi_open(0, 1000000, 0)   # CE0, 1Mbps, main SPI
-# pi.spi_open(1, 1000000, 0)   # CE1, 1Mbps, main SPI
-# pi.spi_open(0, 1000000, 256) # CE0, 1Mbps, auxiliary SPI
-# pi.spi_open(1, 1000000, 256) # CE1, 1Mbps, auxiliary SPI
-# pi.spi_open(2, 1000000, 256) # CE2, 1Mbps, auxiliary SPI
-
-# spi_flags consists of the least significant 22 bits.
-# 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
-#  b  b  b  b  b  b  R  T  n  n  n  n  W  A u2 u1 u0 p2 p1 p0  m  m
-
-# mm defines the SPI mode. 0 0 = mode 0
-# px is 0 if CEx is active low (default) and 1 for active high.
-# ux is 0 if the CEx GPIO is reserved for SPI (default) and 1 otherwise.
-# A is 0 for the main SPI, 1 for the auxiliary SPI.
-# W is 0 if the device is not 3-wire, 1 if the device is 3-wire. Main SPI only.
-# nnnn defines the number of bytes (0-15) to write before switching the MOSI line to MISO to read data. This field is ignored if W is not set. Main SPI only.
-# T is 1 if the least significant bit is transmitted on MOSI first, the default (0) shifts the most significant bit out first. Auxiliary SPI only.
-# R is 1 if the least significant bit is received on MISO first, the default (0) receives the most significant bit first. Auxiliary SPI only.
-# bbbbbb defines the word size in bits (0-32). The default (0) sets 8 bits per word. Auxiliary SPI only.
-
 PIN_CS = 12
 PIN_RESET = 16
 PIN_INTERRUPT = 20
