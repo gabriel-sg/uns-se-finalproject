@@ -144,8 +144,8 @@ int Mrf24j::init(void) {
     write_short(MRF_BBREG2, 0x80); // Set CCA mode to ED
     write_short(MRF_CCAEDTH, 0x60); // – Set CCA ED threshold.
     write_short(MRF_BBREG6, 0x40); // – Set appended RSSI value to RXFIFO.
-    set_interrupts();
-    set_channel(12);
+    // set_interrupts();
+    // set_channel(18);
     // max power is by default.. just leave it...
     // Set transmitter power - See “REGISTER 2-62: RF CONTROL 3 REGISTER (ADDRESS: 0x203)”.
     write_short(MRF_RFCTL, 0x04); //  – Reset RF state machine.
@@ -226,6 +226,9 @@ void Mrf24j::set_interrupts(void) {
  */
 void Mrf24j::set_channel(uint8_t channel) {
     write_long(MRF_RFCON0, (((channel - 11) << 4) | 0x03));
+    write_short(MRF_RFCTL, 0x04); //  – Reset RF state machine.
+    write_short(MRF_RFCTL, 0x00);
+    delay(1);
 }
 
 
@@ -274,7 +277,7 @@ void Mrf24j::interrupt_handler(void) {
         flag_got_tx++;
         uint8_t tmp = read_short(MRF_TXSTAT);
         // 1 means it failed (retry count exceeded), we want 0 to mean it worked.
-        tx_info.tx_ok = !(tmp & ~(1 << TXNSTAT));
+        tx_info.tx_ok = (~tmp & 0x01);
         tx_info.retries = tmp >> 6;
         tx_info.channel_busy = (tmp & (1 << CCAFAIL));
     }
