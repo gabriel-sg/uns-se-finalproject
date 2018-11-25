@@ -1,22 +1,35 @@
 #!/usr/bin/env python
 
-import mfr24j40
+import sys
+import os
 import pigpio
 import time
+import mfr24j40
 
+PANID = 0xcafe
+ADDR_NODO_1 = 0x6001
+ADDR_NODO_2 = 0x6002
+ADDR_NODO_3 = 0x6003
+
+###### Raspberry Pi GPIO ######
 pin_reset = 16
 pin_cs = 12
 pin_interrupt = 20
 spi_channel = 0
 
-run_test = 0
+# Connect to PIGPIO Daemon
+pi = pigpio.pi()
+if not pi.connected:
+    exit()
+
+###### Test Functions ######
+run_test = 1
 
 totalRead = 0
 totalReadSucc = 0
 totalWrite = 0
 totalWriteSucc = 0
 
-# Test Functions
 def testRW(printResults):
     init_time = 0
     contReadReg = 9
@@ -95,7 +108,7 @@ def assertReadLong(name, address, shouldBeValue, printResults):
         print(str(name) + ": read value: " + str(readValue) + ", should be: " + str(shouldBeValue))
     return shouldBeValue == readValue
 
-# HANDLERS
+###### HANDLERS ######
 
 def handle_rx():
     print("received a packet {} bytes long\n".format(mrf.get_rxinfo().frame_length))
@@ -107,7 +120,7 @@ def handle_rx():
     
     print("\r\nASCII data (relevant data):\n")
     for i in range(0,mrf.rx_datalength()):
-        print(mrf.get_rxinfo().rx_data[i])
+        print(str(mrf.get_rxinfo().rx_data[i]),end="")
     
     print("\r\nLQI/RSSI=")
     print(mrf.get_rxinfo().lqi)
@@ -117,46 +130,25 @@ def handle_rx():
 def handle_tx():
     print("handle_tx()" + str(mrf.get_txinfo().tx_ok))
     if (mrf.get_txinfo().tx_ok):
-        print("TX went ok, got ack\n")
+        print("TX went ok, got ack")
     else:
-        print("TX failed after {} retries\n\n".format(mrf.get_txinfo().retries))
+        print("TX failed after {} retries\n".format(mrf.get_txinfo().retries))
 
 def interrupt_routine(gpio,level,tick):
     mrf.interrupt_handler()
-    print("Ocurrio una interrupcion\n")
+    print("Ocurrio una interrupcion")
 
-pi = pigpio.pi()
-if not pi.connected:
-    exit()
+def dummy_cb(gpio,level,tick):
+    print("Ocurrio una dummy")
 
-mrf = mfr24j40.Mrf24j(pin_reset, pin_cs, pin_interrupt)
+###### MAIN ######
 
 last_time = 0
 tx_interval = 2000
 
-mrf.reset()
-mrf.init()
-
-mrf.set_pan(0xcafe)
-mrf.address16_write(0x6001)
-
-mrf.set_channel(18)
-mrf.set_interrupts()
-
-mrf.set_promiscuous(True)
-mrf.set_palna(True)
-
-#mrf.set_bufferPHY(true)
-# Set interrupt edge rising. (default = falling)
-# mrf.write_long(MRF_SLPCON0, 0b00000010)
-
-cb0 = pi.callback(pin_interrupt,pigpio.EITHER_EDGE,interrupt_routine)
-
-print("PANId: 0x{:04X} - Addr: 0x{:04X}".format(mrf.get_pan(),mrf.address16_read()))
-
-last_time = int(round(time.time() * 1000))
-
 if (run_test):
+    mrf.reset()
+    mrf.init()
 
     print("\nRealizando test de lectura y escritura...")
 
@@ -179,32 +171,75 @@ if (run_test):
     print("\n")
     print("-------------------------------------------")
 
-    mrf.reset()
-    mrf.init()
+###### Módulo MRF24J40 ######
 
-    mrf.set_channel(18)
-    mrf.set_interrupts()
+# Crea objeto del módulo MRF
+mrf = mfr24j40.Mrf24j(pin_reset, pin_cs, pin_interrupt)
 
-# LOOP
+mrf.reset()
+mrf.init()
+mrf.set_channel(18)
+mrf.set_pan(PANID)
+mrf.address16_write(ADDR_NODO_1)
+mrf.set_promiscuous(False)
+mrf.set_palna(True)
+mrf.set_interrupts()
+# mrf.set_bufferPHY(true)
+# Set interrupt edge rising. (default = falling)
+# mrf.write_long(MRF_SLPCON0, 0b00000010)
+
+###### Attach Interruption Handler ######
+cb0 = pi.callback(pin_interrupt,pigpio.EITHER_EDGE,interrupt_routine)
+cb1 = pi.callback(4,pigpio.EITHER_EDGE,dummy_cb)
+
+print("PANId: 0x{:04X} - Addr: 0x{:04X}".format(mrf.get_pan(),mrf.address16_read()))
+
+last_time = int(round(time.time() * 1000))
+
+###### LOOP ######
 
 while True:
     try:
         mrf.check_flags(handle_rx, handle_tx)
-    # current_time = int(round(time.time() * 1000))
-    # if (current_time - last_time > tx_interval):
-    #     last_time = current_time
-    #     print("txxxing...\n")
-    #     mrf.send16(0x6005, "puto el que lee porque el que lee se la come")
-    # time.sleep(1)
+        current_time = int(round(time.time() * 1000))
+        if (current_time - last_time > tx_interval):
+            last_time = current_time
+            print("rxxxing...\n")
+            # mrf.send16(0x6005, "puto el que lee porque el que lee se la come")
+            # time.sleep(1)
     
-    # time.sleep(60)
+        # time.sleep(60)
     except KeyboardInterrupt:
         break
 
 print("\nSaliendo...")
-   
+
+mrf.close()
+
 cb0.cancel()
+cb1.cancel()
 
 pi.stop()
 
-# END MAIN
+###### END MAIN ######
+
+# def clear_all():
+#     """Clears all the variables from the workspace of the spyder application."""
+#     gl = globals().copy()
+#     for var in gl:
+#         if var[0] == '_': continue
+#         if 'func' in str(globals()[var]): continue
+#         if 'module' in str(globals()[var]): continue
+
+#         del globals()[var]
+
+# def restart_program():
+#     python = sys.executable
+#     os.execl(python, python, * sys.argv)
+
+# if __name__ == "__main__":
+#     answer = input("Do you want to restart this program ? ")
+#     if answer.lower().strip() in "y yes".split():
+#         restart_program()
+#     else:
+#         clear_all()

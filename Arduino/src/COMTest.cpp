@@ -9,7 +9,7 @@
 #include <SPI.h>
 #include <mrf24j.h>
 
-int run_test = 1;
+int run_test = 0;
 
 // Functions headers
 void interrupt_routine();
@@ -32,7 +32,7 @@ const int pin_interrupt = 2;  // default interrupt pin on ATmega8/168/328
 Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
 long last_time;
-long tx_interval = 1000;
+long tx_interval = 2000;
 
 void setup() {
     Serial.begin(9600);

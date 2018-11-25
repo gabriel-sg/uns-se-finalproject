@@ -1,5 +1,8 @@
+
 import pigpio
 import time
+
+
 
 ###### Constantes ######
 
@@ -152,6 +155,24 @@ class tx_info_t:
 
 class Mrf24j:
 
+    rx_buf = []
+    for i in range(0,127):
+        rx_buf.append(0)
+
+    bytes_MHR = 9
+    bytes_FCS = 2
+    bytes_nodata = bytes_MHR + bytes_FCS
+
+    ignoreBytes = 0
+
+    bufPHY = False
+
+    flag_got_rx = 0
+    flag_got_tx = 0
+
+    rx_info = rx_info_t()
+    tx_info = tx_info_t()
+
     pi = pigpio.pi()
     if not pi.connected:
         exit()
@@ -166,24 +187,6 @@ class Mrf24j:
         self.pi.set_mode(self._pin_int,pigpio.INPUT)
 
         self.spi_handler = self.pi.spi_open(0, 500000, 0) # channel 0 (not use), 500 Kbps, mode 0
-
-        self.rx_buf = []
-        for i in range(0,127):
-            self.rx_buf.append(0)
-
-        self.bytes_MHR = 9
-        self.bytes_FCS = 2
-        self.bytes_nodata = self.bytes_MHR + self.bytes_FCS
-
-        self.ignoreBytes = 0
-
-        self.bufPHY = False
-
-        self.flag_got_rx = 0
-        self.flag_got_tx = 0
-
-        self.rx_info = rx_info_t()
-        self.tx_info = tx_info_t()
 
     def reset(self):
         self.pi.write(self._pin_reset,pigpio.LOW)
@@ -405,4 +408,226 @@ class Mrf24j:
     def close(self):
         self.pi.spi_close(self.spi_handler)
         self.pi.stop()
+
+
+
+
+
+
+
+###### Raspberry Pi GPIO ######
+pin_reset = 16
+pin_cs = 12
+pin_interrupt = 20
+spi_channel = 0
+
+# Connect to PIGPIO Daemon
+pi = pigpio.pi()
+if not pi.connected:
+    exit()
+
+###### Test Functions ######
+run_test = 1
+
+totalRead = 0
+totalReadSucc = 0
+totalWrite = 0
+totalWriteSucc = 0
+
+def testRW(printResults):
+    init_time = 0
+    contReadReg = 9
+    contReadSucc = 0
+    if (printResults):
+        init_time = int(round(time.time() * 1000))
+        print("\nLeyendo " + str(contReadReg) + " registros...\n")
+    
+    contReadSucc += assertReadShort("MRF_PACON2", MRF_PACON2, 0b10001000, printResults)
+    contReadSucc += assertReadShort("MRF_TXSTBL", MRF_TXSTBL, 0b01110101, printResults)
+    contReadSucc += assertReadShort("MRF_TXBCON1", MRF_TXBCON1, 0b00110000, printResults)
+    contReadSucc += assertReadLong("MRF_WAKETIMEL", MRF_WAKETIMEL, 0b00001010, printResults)
+    contReadSucc += assertReadShort("MRF_BBREG2", MRF_BBREG2, 0b01001000, printResults)
+    contReadSucc += assertReadShort("MRF_BBREG3", MRF_BBREG3, 0b11011000, printResults)
+    contReadSucc += assertReadShort("MRF_BBREG4", MRF_BBREG4, 0b10011100, printResults)
+    contReadSucc += assertReadShort("MRF_BBREG6", MRF_BBREG6, 0b00000001, printResults)
+    contReadSucc += assertReadShort("MRF_INTCON", MRF_INTCON, 0b11111111, printResults)
+
+    contWriteReg = 11
+    contWriteSucc = 0
+    if (printResults):
+        print("\nEscribiendo " + str(contWriteReg) + " registros...\n")
+
+    contWriteSucc += assertWriteShort("MRF_PACON2", MRF_PACON2, 0x98, printResults)
+    contWriteSucc += assertWriteShort("MRF_TXSTBL", MRF_TXSTBL, 0x95, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON0", MRF_RFCON0, 0x03, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON1", MRF_RFCON1, 0x01, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON2", MRF_RFCON2, 0x80, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON6", MRF_RFCON6, 0x90, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON7", MRF_RFCON7, 0x80, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON8", MRF_RFCON8, 0x10, printResults)
+    contWriteSucc += assertWriteLong("MRF_SLPCON1", MRF_SLPCON1, 0x21, printResults)
+    contWriteSucc += assertWriteShort("MRF_BBREG2", MRF_BBREG2, 0x80, printResults)
+    contWriteSucc += assertWriteShort("MRF_CCAEDTH", MRF_CCAEDTH, 0x60, printResults)
+
+    if (printResults):
+        print("\n------------------Resumen------------------\n")
+        print("Lecturas exitosas: " + str(contReadSucc))
+        print("Lecturas fallidas: " + str(contReadReg - contReadSucc))
+        print("\n")
+        print("Escrituras exitosas: " + str(contWriteSucc))
+        print("Escrituras fallidas: " + str(contWriteReg - contWriteSucc))
+        print("\n")
+        init_time = int(round(time.time() * 1000)) - init_time
+        print("Test duration: " + str(init_time) + " ms\n")
+        print("-------------------------------------------")
+
+    #totalRead += contReadReg
+    #totalReadSucc += contReadSucc
+    #totalWrite += contWriteReg
+    #totalWriteSucc += contWriteSucc
+
+def assertWriteShort(name, address, toWriteValue, printResults):
+    mrf.write_short(address, toWriteValue)
+    readValue = mrf.read_short(address)
+    if (printResults):
+        print(str(name) + ": write value: " + str(toWriteValue) + ", read value: " + str(readValue))
+    return toWriteValue == readValue
+
+def assertWriteLong(name, address, toWriteValue, printResults):
+    mrf.write_long(address, toWriteValue)
+    readValue = mrf.read_long(address)
+    if (printResults):
+        print(str(name) + ": write value: " + str(toWriteValue) + ", read value: " + str(readValue))
+    return toWriteValue == readValue
+
+def assertReadShort(name, address, shouldBeValue, printResults):
+    readValue = mrf.read_short(address)
+    if (printResults):
+        print(str(name) + ": read value: " + str(readValue) + ", should be: " + str(shouldBeValue))
+    return shouldBeValue == readValue
+
+def assertReadLong(name, address, shouldBeValue, printResults):
+    readValue = mrf.read_long(address)
+    if (printResults):
+        print(str(name) + ": read value: " + str(readValue) + ", should be: " + str(shouldBeValue))
+    return shouldBeValue == readValue
+
+###### HANDLERS ######
+
+def handle_rx():
+    print("received a packet {} bytes long\n".format(mrf.get_rxinfo().frame_length))
+    
+    if (mrf.get_bufferPHY()):
+        print("Packet data (PHY Payload):\n")
+        for i in range(0,mrf.get_rxinfo().frame_length):
+            print(mrf.get_rxbuf()[i])
+    
+    print("\r\nASCII data (relevant data):\n")
+    for i in range(0,mrf.rx_datalength()):
+        print(str(mrf.get_rxinfo().rx_data[i]),end="")
+    
+    print("\r\nLQI/RSSI=")
+    print(mrf.get_rxinfo().lqi)
+    print("/")
+    print(mrf.get_rxinfo().rssi)
+
+def handle_tx():
+    print("handle_tx()" + str(mrf.get_txinfo().tx_ok))
+    if (mrf.get_txinfo().tx_ok):
+        print("TX went ok, got ack")
+    else:
+        print("TX failed after {} retries\n".format(mrf.get_txinfo().retries))
+
+def interrupt_routine(gpio,level,tick):
+    mrf.interrupt_handler()
+    print("Ocurrio una interrupcion")
+
+def dummy_cb(gpio,level,tick):
+    print("Ocurrio una dummy")
+
+###### MAIN ######
+
+last_time = 0
+tx_interval = 2000
+
+mrf = Mrf24j(pin_reset, pin_cs, pin_interrupt)
+
+if (run_test):
+    mrf.reset()
+    mrf.init()
+
+    print("\nRealizando test de lectura y escritura...")
+
+    count = 10
+    testDuration = int(round(time.time() * 1000))
+    for i in range(0,count):
+        mrf.reset()
+        testRW(1)
+
+    testDuration = int(round(time.time() * 1000)) - testDuration
+
+    print("\n------------------Resumen------------------\n")
+    print("Lecturas exitosas: " + str(totalReadSucc))
+    print("Lecturas fallidas: " + str(totalRead - totalReadSucc))
+    print("\n")
+    print("Escrituras exitosas: " + str(totalWriteSucc))
+    print("Escrituras fallidas: " + str(totalWrite - totalWriteSucc))
+    print("\n")
+    print("Test duration: " + str(testDuration) + " ms")
+    print("\n")
+    print("-------------------------------------------")
+
+###### Módulo MRF24J40 ######
+
+mrf.reset()
+mrf.init()
+mrf.set_channel(18)
+mrf.set_pan(0xcafe)
+mrf.address16_write(0x6001)
+mrf.set_promiscuous(False)
+mrf.set_palna(True)
+mrf.set_interrupts()
+# mrf.set_bufferPHY(true)
+# Set interrupt edge rising. (default = falling)
+# mrf.write_long(MRF_SLPCON0, 0b00000010)
+
+###### Attach Interruption Handler ######
+cb0 = pi.callback(pin_interrupt,pigpio.EITHER_EDGE,interrupt_routine)
+cb1 = pi.callback(4,pigpio.EITHER_EDGE,dummy_cb)
+
+print("PANId: 0x{:04X} - Addr: 0x{:04X}".format(mrf.get_pan(),mrf.address16_read()))
+
+last_time = int(round(time.time() * 1000))
+
+# LOOP
+
+while True:
+    try:
+        mrf.check_flags(handle_rx, handle_tx)
+        current_time = int(round(time.time() * 1000))
+        if (current_time - last_time > tx_interval):
+            last_time = current_time
+            print("rxxxing...\n")
+    #     mrf.send16(0x6005, "puto el que lee porque el que lee se la come")
+    # time.sleep(1)
+    
+        # time.sleep(60)
+    except KeyboardInterrupt:
+        break
+
+print("\nSaliendo...")
+   
+mrf.close()
+
+cb0.cancel()
+cb1.cancel()
+
+pi.stop()
+
+# END MAIN
+
+
+
+
+
 

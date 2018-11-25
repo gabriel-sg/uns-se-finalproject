@@ -24,5 +24,11 @@ MRF24J40:
 
     - En la transmisión se envían mínimamente (9 + 2) bytes + payload.
 
+    - Luego de cambiar la frecuencia del canal (set_channel), hay que reiniciar RF State Machine y esperar 192 us
+
 Tener conectado CS y RST con los pines de la libreria sino no funciona al arrancar.
 No usar CS directo a tierra y/o RST a VCC.
+
+Python:
+
+    * TODO: Enviar todo como String o enteros
