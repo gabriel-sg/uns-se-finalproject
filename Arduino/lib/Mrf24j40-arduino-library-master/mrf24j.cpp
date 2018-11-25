@@ -188,8 +188,9 @@ void Mrf24j::init(void) {
     write_short(MRF_BBREG2, 0x80); // Set CCA mode to ED
     write_short(MRF_CCAEDTH, 0x60); // – Set CCA ED threshold.
     write_short(MRF_BBREG6, 0x40); // – Set appended RSSI value to RXFIFO.
-    set_interrupts();
-    set_channel(18);
+
+
+    
     // max power is by default.. just leave it...
     // Set transmitter power - See “REGISTER 2-62: RF CONTROL 3 REGISTER (ADDRESS: 0x203)”.
     write_short(MRF_RFCTL, 0x04); //  – Reset RF state machine.
@@ -206,7 +207,6 @@ void Mrf24j::init(void) {
 void Mrf24j::interrupt_handler(void) {
     uint8_t last_interrupt = read_short(MRF_INTSTAT);
     if (last_interrupt & MRF_I_RXIF) {
-        flag_got_rx++;
         // read out the packet data...
         
         //Serial.print("panid: 0x"); Serial.print(read_long(0x305), HEX); Serial.print(read_long(0x304), HEX); Serial.println();
@@ -217,6 +217,7 @@ void Mrf24j::interrupt_handler(void) {
         rx_disable();
         // read start of rxfifo for, has 2 bytes more added by FCS. frame_length = m + n + 2
         uint8_t frame_length = read_long(0x300);
+        rx_info.frame_length = frame_length;
 
         // buffer all bytes in PHY Payload
         if(bufPHY){
@@ -233,22 +234,24 @@ void Mrf24j::interrupt_handler(void) {
             rx_info.rx_data[rd_ptr++] = read_long(0x301 + bytes_MHR + i);
         }
 
-        rx_info.frame_length = frame_length;
         // same as datasheet 0x301 + (m + n + 2) <-- frame_length
         rx_info.lqi = read_long(0x301 + frame_length);
         // same as datasheet 0x301 + (m + n + 3) <-- frame_length + 1
         rx_info.rssi = read_long(0x301 + frame_length + 1);
 
+        flag_got_rx++;
+
         rx_enable();
         interrupts();
     }
     if (last_interrupt & MRF_I_TXNIF) {
-        flag_got_tx++;
         uint8_t tmp = read_short(MRF_TXSTAT);
         // 1 means it failed, we want 1 to mean it worked.
-        tx_info.tx_ok = !(tmp & ~(1 << TXNSTAT));
+        // tx_info.tx_ok = !(tmp & ~(1 << TXNSTAT));    -> así estaba en la lib de git
+        tx_info.tx_ok = (~tmp & 0x01);
         tx_info.retries = tmp >> 6;
         tx_info.channel_busy = (tmp & (1 << CCAFAIL));
+        flag_got_tx++;
     }
 }
 

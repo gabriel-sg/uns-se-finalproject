@@ -147,7 +147,7 @@ MRF_I_TXNIF = 0b00000001
 class rx_info_t:
     def __init__(self):
         self.frame_length = 0
-        self.rx_data = []
+        self.rx_data = [116]
         self.lqi = 0
         self.rssi = 0
 
@@ -161,7 +161,7 @@ class tx_info_t:
 
 class Mrf24j:
 
-    rx_buf = []
+    rx_buf = [127]
 
     bytes_MHR = 9
     bytes_FCS = 2
@@ -169,7 +169,7 @@ class Mrf24j:
 
     ignoreBytes = 0
 
-    bufPHY = 0
+    bufPHY = False
 
     flag_got_rx = 0
     flag_got_tx = 0
@@ -180,6 +180,7 @@ class Mrf24j:
     pi = pigpio.pi()
     if not pi.connected:
         exit()
+
     def __init__(self, pin_reset, pin_chip_select, pin_interrupt):
         self._pin_reset = pin_reset
         self._pin_cs = pin_chip_select
@@ -195,7 +196,6 @@ class Mrf24j:
         time.sleep(0.002)
         self.pi.write(self._pin_reset,pigpio.HIGH)
         time.sleep(0.002)
-        return 0
 
     def spi_transfer(self, byte):
         byte = byte & 255           # truncado a 8 bits
@@ -251,8 +251,6 @@ class Mrf24j:
         self.write_short(MRF_CCAEDTH, 0x60) # – Set CCA ED threshold.
         self.write_short(MRF_BBREG6, 0x40) # – Set appended RSSI value to RXFIFO.
 
-        self.set_channel(12)
-
         self.write_short(MRF_RFCTL, 0x04) #  – Reset RF state machine.
         self.write_short(MRF_RFCTL, 0x00) # part 2
         time.sleep(0.001) # delay at least 192usec
@@ -286,6 +284,7 @@ class Mrf24j:
         self.write_long(MRF_RFCON0, (((channel - 11) << 4) | 0x03))
 
     def rx_enable(self):
+        self.write_short(MRF_RXFLUSH, 0b00000001)
         self.write_short(MRF_BBREG1, 0x00)
 
     def rx_disable(self):
@@ -304,7 +303,7 @@ class Mrf24j:
         return self.rx_buf
 
     def  rx_datalength(self):        # return int
-        return self.rx_info.frame_length - self.bytes_nodata
+        return (self.rx_info.frame_length - self.bytes_nodata)
 
     def set_ignoreBytes(self,ib):    # ib int
         self.ignoreBytes = ib
@@ -321,7 +320,8 @@ class Mrf24j:
         else:
             self.write_long(MRF_TESTMODE, 0x00)
 
-    def send16(self,dest16, data):   # dest16 uint16_t,
+    def send16(self,dest16, data):   # dest16 uint16_t
+        d_send = data.encode()
         data_len = len(data)
         i = 0
         self.write_long(i, self.bytes_MHR)
@@ -353,7 +353,6 @@ class Mrf24j:
         i += 1
 
         i += self.ignoreBytes
-        d_send = data.encode()
         for q in range(0,data_len):
             self.write_long(i, d_send[q])
             i += 1
@@ -362,13 +361,13 @@ class Mrf24j:
 
     def interrupt_handler(self):
         last_interrupt = self.read_short(MRF_INTSTAT)
+        print("last_interrupt: {}".format(hex(last_interrupt)))
         if (last_interrupt & MRF_I_RXIF):
-            self.flag_got_rx += 1
-
+            
             self.rx_disable()
 
             frame_length = self.read_long(0x300)
-
+            
             if(self.bufPHY):
                 rb_ptr = 0
                 for i in range(0,frame_length):
@@ -385,21 +384,23 @@ class Mrf24j:
             self.rx_info.rssi = self.read_long(0x301 + frame_length + 1)
 
             self.rx_enable()
+            while(self.read_short(MRF_INTSTAT) & 0b00001000):
+                None
+            self.flag_got_rx += 1
 
         if (last_interrupt & MRF_I_TXNIF):
-            self.flag_got_tx += 1
             tmp = self.read_short(MRF_TXSTAT)
-            self.tx_info.tx_ok = not (tmp & ~(1 << TXNSTAT))
+            # self.tx_info.tx_ok = not(tmp & ~(1 << TXNSTAT))
+            self.tx_info.tx_ok = (~tmp & 0x01)
             self.tx_info.retries = tmp >> 6
             self.tx_info.channel_busy = (tmp & (1 << CCAFAIL))
+            self.flag_got_tx += 1
 
     def check_flags(self,rx_handler, tx_handler):
         if (self.flag_got_rx):
-            print("flag_got_rx")
             self.flag_got_rx = 0
             rx_handler()
         elif (self.flag_got_tx):
-            print("flag_got_tx")
             self.flag_got_tx = 0
             tx_handler()
 

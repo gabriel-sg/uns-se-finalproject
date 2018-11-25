@@ -9,7 +9,7 @@
 #include <SPI.h>
 #include <mrf24j.h>
 
-int run_test = 0;
+int run_test = 1;
 
 // Functions headers
 void interrupt_routine();
@@ -78,6 +78,8 @@ void setup() {
     mrf.set_pan(0xcafe);
     // This is _our_ address
     mrf.address16_write(0x6005);
+
+    mrf.set_channel(18);
     
     // uncomment if you want to receive any packet on this channel
     mrf.set_promiscuous(false);
@@ -87,6 +89,8 @@ void setup() {
     
     // uncomment if you want to buffer all PHY Payload
     //mrf.set_bufferPHY(true);
+
+    mrf.set_interrupts();
 
     attachInterrupt(0, interrupt_routine, CHANGE); // interrupt 0 equivalent to pin 2(INT0) on ATmega8/168/328
     last_time = millis();
@@ -106,8 +110,8 @@ void loop() {
     if ((current_time - last_time) > tx_interval) {
         last_time = current_time;
         //Serial.println("rxxxing...");
-        //Serial.println("txxxing...");
-        //mrf.send16(0x6001, "abcd");
+        Serial.println("txxxing...");
+        mrf.send16(0x6001, "abcd");
     }
 
 }

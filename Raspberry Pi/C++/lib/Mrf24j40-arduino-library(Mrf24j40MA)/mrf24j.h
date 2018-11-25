@@ -149,7 +149,7 @@
 
 typedef struct _rx_info_t{
     uint8_t frame_length;
-    uint8_t rx_data[116]; //max data length = (127 aMaxPHYPacketSize - 2 Frame control - 1 sequence number - 2 panid - 2 shortAddr Destination - 2 shortAddr Source - 2 FCS)
+    uint8_t rx_data[116];
     uint8_t lqi;
     uint8_t rssi;
 } rx_info_t;
@@ -158,9 +158,9 @@ typedef struct _rx_info_t{
  * Based on the TXSTAT register, but "better"
  */
 typedef struct _tx_info_t{
-    uint8_t tx_ok:1;
-    uint8_t retries:2;
-    uint8_t channel_busy:1;
+    uint8_t tx_ok;
+    uint8_t retries;
+    uint8_t channel_busy;
 } tx_info_t;
 
 class Mrf24j

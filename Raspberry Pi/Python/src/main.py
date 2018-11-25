@@ -9,7 +9,7 @@ pin_cs = 12
 pin_interrupt = 20
 spi_channel = 0
 
-run_test = 1
+run_test = 0
 
 totalRead = 0
 totalReadSucc = 0
@@ -115,6 +115,7 @@ def handle_rx():
     print(mrf.get_rxinfo().rssi)
 
 def handle_tx():
+    print("handle_tx()" + str(mrf.get_txinfo().tx_ok))
     if (mrf.get_txinfo().tx_ok):
         print("TX went ok, got ack\n")
     else:
@@ -139,15 +140,17 @@ mrf.init()
 mrf.set_pan(0xcafe)
 mrf.address16_write(0x6001)
 
-#mrf.set_promiscuous(false)
+mrf.set_channel(18)
+mrf.set_interrupts()
+
+mrf.set_promiscuous(True)
 mrf.set_palna(True)
 
-#mrf.set_channel(18)
 #mrf.set_bufferPHY(true)
 # Set interrupt edge rising. (default = falling)
 # mrf.write_long(MRF_SLPCON0, 0b00000010)
 
-pi.callback(pin_interrupt,pigpio.FALLING_EDGE,interrupt_routine)
+cb0 = pi.callback(pin_interrupt,pigpio.EITHER_EDGE,interrupt_routine)
 
 print("PANId: 0x{:04X} - Addr: 0x{:04X}".format(mrf.get_pan(),mrf.address16_read()))
 
@@ -179,15 +182,29 @@ if (run_test):
     mrf.reset()
     mrf.init()
 
+    mrf.set_channel(18)
+    mrf.set_interrupts()
+
 # LOOP
 
 while True:
-    mrf.check_flags(handle_rx, handle_tx)
-    current_time = int(round(time.time() * 1000))
-    if (current_time - last_time > tx_interval):
-        last_time = current_time
-        print("txxxing...\n")
-        mrf.send16(0x6005, "abcd")
-    time.sleep(1)
+    try:
+        mrf.check_flags(handle_rx, handle_tx)
+    # current_time = int(round(time.time() * 1000))
+    # if (current_time - last_time > tx_interval):
+    #     last_time = current_time
+    #     print("txxxing...\n")
+    #     mrf.send16(0x6005, "puto el que lee porque el que lee se la come")
+    # time.sleep(1)
     
+    # time.sleep(60)
+    except KeyboardInterrupt:
+        break
+
+print("\nSaliendo...")
+   
+cb0.cancel()
+
+pi.stop()
+
 # END MAIN

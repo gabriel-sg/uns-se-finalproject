@@ -22,5 +22,7 @@ MRF24J40:
 
     - Los cambios en los módulos MRF24J40 tardan unos minutos en reflejar.
 
+    - En la transmisión se envían mínimamente (9 + 2) bytes + payload.
+
 Tener conectado CS y RST con los pines de la libreria sino no funciona al arrancar.
 No usar CS directo a tierra y/o RST a VCC.
