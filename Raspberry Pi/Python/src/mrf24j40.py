@@ -1,4 +1,4 @@
-import pigpio
+import wiringpi
 import time
 
 ###### Constantes ######
@@ -155,20 +155,18 @@ class tx_info_t:
 
 class Mrf24j:
 
-    pi = pigpio.pi()
-    if not pi.connected:
-        exit()
+    wiringpi.wiringPiSetup()
 
     def __init__(self, pin_reset, pin_chip_select, pin_interrupt):
         self._pin_reset = pin_reset
         self._pin_cs = pin_chip_select
         self._pin_int = pin_interrupt
-        
-        self.pi.set_mode(self._pin_reset,pigpio.OUTPUT)
-        self.pi.set_mode(self._pin_cs,pigpio.OUTPUT)
-        self.pi.set_mode(self._pin_int,pigpio.INPUT)
 
-        self.spi_handler = self.pi.spi_open(0, 500000, 0) # channel 0 (not use), 500 Kbps, mode 0
+        wiringpi.pinMode(self._pin_reset,1)
+        wiringpi.pinMode(self._pin_cs,1)
+        wiringpi.pinMode(self._pin_int,0)
+
+        wiringpi.wiringPiSPISetup(0, 500000) # channel 0 (not used), 500 Khz
 
         self.rx_buf = []
         for i in range(0,127):
@@ -189,47 +187,47 @@ class Mrf24j:
         self.tx_info = tx_info_t()
 
     def reset(self):
-        self.pi.write(self._pin_reset,pigpio.LOW)
+        wiringpi.digitalWrite(self._pin_reset,0)
         time.sleep(0.02)
-        self.pi.write(self._pin_reset,pigpio.HIGH)
+        wiringpi.digitalWrite(self._pin_reset,1)
         time.sleep(0.02)
 
     def spi_transfer(self, byte):
-        byte = byte & 255           # truncado a 8 bits
-        rx_tuple = self.pi.spi_xfer(self.spi_handler, [byte])
+        byte = byte & 255   # truncado a 8 bits
+        rx_tuple = wiringpi.wiringPiSPIDataRW(0, bytes([byte]))
         return rx_tuple[1][0]
 
     def read_short(self, address):
-        self.pi.write(self._pin_cs, pigpio.LOW)
+        wiringpi.digitalWrite(self._pin_cs, 0)
         self.spi_transfer(address << 1 & 0b01111110)
         ret = self.spi_transfer(0)
-        self.pi.write(self._pin_cs, pigpio.HIGH)
+        wiringpi.digitalWrite(self._pin_cs, 1)
         return ret
 
     def read_long(self, address):
-        self.pi.write(self._pin_cs, pigpio.LOW)
+        wiringpi.digitalWrite(self._pin_cs, 0)
         ahigh = address >> 3
         alow = address << 5
         self.spi_transfer(0x80 | ahigh)
         self.spi_transfer(alow)
         ret = self.spi_transfer(0)
-        self.pi.write(self._pin_cs, pigpio.HIGH)
+        wiringpi.digitalWrite(self._pin_cs, 1)
         return ret
 
     def write_short(self, address, data):
-        self.pi.write(self._pin_cs, pigpio.LOW)
+        wiringpi.digitalWrite(self._pin_cs, 0)
         self.spi_transfer((address<<1 & 0b01111110) | 0x01)
         self.spi_transfer(data)
-        self.pi.write(self._pin_cs, pigpio.HIGH)
+        wiringpi.digitalWrite(self._pin_cs, 1)
 
     def write_long(self, address, data):
-        self.pi.write(self._pin_cs, pigpio.LOW)
+        wiringpi.digitalWrite(self._pin_cs, 0)
         ahigh = address >> 3
         alow = address << 5
         self.spi_transfer(0x80 | ahigh)
         self.spi_transfer(alow | 0x10)
         self.spi_transfer(data)
-        self.pi.write(self._pin_cs, pigpio.HIGH)
+        wiringpi.digitalWrite(self._pin_cs, 1)
 
     def init(self):
 
@@ -360,27 +358,69 @@ class Mrf24j:
 
         self.write_short(MRF_TXNCON, (1<<MRF_TXNACKREQ | 1<<MRF_TXNTRIG))
 
+    def send_command(self,dest16, actuadorId, command):
+        data_len = 3
+        i = 0
+        self.write_long(i, self.bytes_MHR)
+        i += 1
+        self.write_long(i, self.bytes_MHR + self.ignoreBytes + data_len)
+        i += 1
+        self.write_long(i, 0b01100001)
+        i += 1
+        self.write_long(i, 0b10001000)
+        i += 1
+        self.write_long(i, 1)
+        i += 1
+
+        panid = self.get_pan()
+
+        self.write_long(i, panid & 0xff)
+        i += 1
+        self.write_long(i, panid >> 8)
+        i += 1
+        self.write_long(i, dest16 & 0xff)
+        i += 1
+        self.write_long(i, dest16 >> 8)
+        i += 1
+
+        src16 = self.address16_read()
+        self.write_long(i, src16 & 0xff)
+        i += 1
+        self.write_long(i, src16 >> 8)
+        i += 1
+
+        i += self.ignoreBytes
+
+        self.write_long(i, 1) # 1: msg_type = command
+        i+=1
+        self.write_long(i, actuadorId)
+        i+=1
+        self.write_long(i, command)
+
+        self.write_short(MRF_TXNCON, (1<<MRF_TXNACKREQ | 1<<MRF_TXNTRIG))
+
+
     def interrupt_handler(self):
         last_interrupt = self.read_short(MRF_INTSTAT)
         # print("last_interrupt: {}".format(hex(last_interrupt)))
         if (last_interrupt & MRF_I_RXIF):
-            
+
             self.rx_disable()
 
             # print("panid: 0x") print(read_long(0x305), HEX) print(read_long(0x304), HEX)
             # print("addr_2: 0x") print(read_long(0x307), HEX) print(read_long(0x306), HEX)
             # print("addr_3: 0x") print(read_long(0x309), HEX) print(read_long(0x308), HEX)
-            
+
             panid_aux = ((self.read_long(0x305) << 8) | self.read_long(0x304))
             self.rx_info.panid = str(hex(panid_aux))
             dest_aux = ((self.read_long(0x307) << 8) | self.read_long(0x306))
-            self.rx_info.srcaddr = str(hex(dest_aux))
+            self.rx_info.destaddr = str(hex(dest_aux))
             src_aux = ((self.read_long(0x309) << 8) | self.read_long(0x308))
-            self.rx_info.destaddr = str(hex(src_aux))
+            self.rx_info.srcaddr = str(hex(src_aux))
 
             frame_length = self.read_long(0x300)
             self.rx_info.frame_length = frame_length
-            
+
             if(self.bufPHY):
                 rb_ptr = 0
                 for i in range(0,frame_length):
@@ -416,7 +456,4 @@ class Mrf24j:
             self.flag_got_tx = 0
             tx_handler()
 
-    def close(self):
-        self.pi.spi_close(self.spi_handler)
-        self.pi.stop()
 

@@ -139,7 +139,7 @@ def handle_tx():
 ###### MAIN ######
 
 last_time = 0
-tx_interval = 2000
+tx_interval = 3000
 
 if (run_test):
     print("\nRealizando test de lectura y escritura...")
@@ -159,6 +159,7 @@ if (run_test):
     print("Escrituras fallidas: " + str(totalWrite - totalWriteSucc))
     print("\n")
     print("Test duration: " + str(testDuration) + " ms")
+    print("")
     print("-------------------------------------------")
 
 

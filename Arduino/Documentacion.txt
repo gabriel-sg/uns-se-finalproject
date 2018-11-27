@@ -37,3 +37,5 @@ Python:
 msg_type:
     0 = sensor
     1 = comando
+
+Con el starter kit no se pueden usar los pines 0 y 1.
