@@ -15,8 +15,7 @@ void config_mrf(uint16_t panId, uint16_t address, uint8_t channel, boolean promi
 void button();
 void read_command();
 void do_command(uint8_t actuadorId, uint8_t command);
-
-
+int adc_to_lux(int adcValue);
 
 const int pin_reset = 10;
 const int pin_cs = 9;
@@ -45,7 +44,7 @@ void setup() {
     int run_test = 1;
     int cant_iteraciones_test = 5;
     int print_detalles = 0;
-    if(run_test){
+    if (run_test) {
         rw_test(cant_iteraciones_test, print_detalles);
     }
 
@@ -55,7 +54,7 @@ void setup() {
     boolean promiscuous = false;
     boolean palna = true;
     config_mrf(panId, address, channel, promiscuous, palna);
-    
+
     Serial.print("PANID attached: ");
     Serial.print(mrf.get_pan(), HEX);
     Serial.println();
@@ -92,14 +91,15 @@ void loop() {
         noInterrupts();
         luzValue = analogRead(A0);
         interrupts();
-        Serial.println("Luminocidad: "+ String(luzValue)+"\n");
-        send_pkg(2, luzValue);        
+        luzValue = adc_to_lux(luzValue);
+        Serial.println("Luminocidad: " + String(luzValue) + "\n");
+        send_pkg(2, luzValue);
         last_time = current_time;
     }
     button();
 }
 
-void send_pkg(byte sensorId, int value){
+void send_pkg(byte sensorId, int value) {
     digitalWrite(pin_greenLed, HIGH);
     //Serial.println("rxxxing...");
     Serial.println("txxxing...\n");
@@ -108,15 +108,39 @@ void send_pkg(byte sensorId, int value){
     digitalWrite(pin_greenLed, LOW);
 }
 
-void button(){
+void button() {
     int buttonState = digitalRead(pin_button);
-    if(buttonState == 1){
+    if (buttonState == 1) {
         digitalWrite(pin_buzzer, HIGH);
         digitalWrite(pin_blueLed, HIGH);
     }
 }
 
-void config_mrf(uint16_t panId, uint16_t address, uint8_t channel, boolean promiscuous, boolean palna){
+int adc_to_lux(int adcValue) {
+    int luxValue = 0;
+    if (adcValue > 900) {
+        luxValue = 100;
+    } else if (adcValue > 800) {
+        luxValue = map(adcValue, 800, 900, 80, 100);
+    } else if (adcValue > 700) {
+        luxValue = map(adcValue, 700, 800, 40, 80);
+    } else if (adcValue > 600) {
+        luxValue = map(adcValue, 600, 700, 20, 40);
+    } else if (adcValue > 500) {
+        luxValue = map(adcValue, 500, 600, 10, 20);
+    } else if (adcValue > 400) {
+        luxValue = map(adcValue, 400, 500, 6, 10);
+    } else if (adcValue > 300) {
+        luxValue = map(adcValue, 300, 400, 3, 6);
+    } else if (adcValue > 200) {
+        luxValue = map(adcValue, 200, 300, 1, 3);
+    } else {
+        luxValue = 1;
+    }
+    return luxValue;
+}
+
+void config_mrf(uint16_t panId, uint16_t address, uint8_t channel, boolean promiscuous, boolean palna) {
     noInterrupts();
     mrf.reset();
     mrf.init();
@@ -150,7 +174,7 @@ void handle_rx() {
     //#### PRINT PAYLOAD + LQi/rssi ######
     Serial.println("\r\nBytes data:");
     for (int i = 0; i < mrf.rx_datalength(); i++) {
-        Serial.print(String(mrf.get_rxinfo()->rx_data[i])+"-");
+        Serial.print(String(mrf.get_rxinfo()->rx_data[i]) + "-");
     }
     Serial.println("\r\nASCII data:");
     for (int i = 0; i < mrf.rx_datalength(); i++) {
@@ -165,28 +189,28 @@ void handle_rx() {
     read_command();
 }
 
-void read_command(){
+void read_command() {
     uint8_t msg_type = mrf.get_rxinfo()->rx_data[0];
-    Serial.println("MSG TYPE: "+ String(msg_type));
-    if(msg_type == 1){ // es un comando
+    Serial.println("MSG TYPE: " + String(msg_type));
+    if (msg_type == 1) {  // es un comando
         uint8_t actuadorId = mrf.get_rxinfo()->rx_data[1];
         uint8_t command = mrf.get_rxinfo()->rx_data[2];
         do_command(actuadorId, command);
     }
 }
 
-void do_command(uint8_t actuadorId, uint8_t command){
-    Serial.println("actuadorId: "+ String(actuadorId)+" command: "+String(command));
-    switch (actuadorId){
+void do_command(uint8_t actuadorId, uint8_t command) {
+    Serial.println("actuadorId: " + String(actuadorId) + " command: " + String(command));
+    switch (actuadorId) {
         case actuador_blueLed:
-            if(command == 1){
+            if (command == 1) {
                 Serial.println("ESTOY ACAAAAA!");
                 digitalWrite(pin_blueLed, HIGH);
-            }else{
+            } else {
                 digitalWrite(pin_blueLed, LOW);
             }
             break;
-    
+
         default:
             break;
     }
