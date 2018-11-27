@@ -77,7 +77,7 @@ void setup() {
     
     mrf.set_pan(0xcafe);
     // This is _our_ address
-    mrf.address16_write(0x6005);
+    mrf.address16_write(0x6002);
 
     mrf.set_channel(18);
     
@@ -111,7 +111,7 @@ void loop() {
         last_time = current_time;
         //Serial.println("rxxxing...");
         Serial.println("txxxing...");
-        mrf.send16(0x6001, "abcd");
+        mrf.send16(0x6003, "Gabi");
     }
 
 }

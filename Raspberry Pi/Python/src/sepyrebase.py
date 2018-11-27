@@ -1,10 +1,19 @@
 import pyrebase
-import json
 
-PANID = 0xcafe
-ADDR_NODO_1 = 0x6001
-ADDR_NODO_2 = 0x6002
-ADDR_NODO_3 = 0x6003
+PANID = "0xcafe"
+ADDR_NODO_1 = "0x6001"
+ADDR_NODO_2 = "0x6002"
+ADDR_NODO_3 = "0x6003"
+
+ACTUADORES = "Actuadores"
+ACT1 = "Actuador1"
+ACT2 = "Actuador2"
+ACT3 = "Actuador3"
+
+SENSORES = "Sensores"
+SEN1 = "Sensor1"
+SEN2 = "Sensor2"
+SEN3 = "Sensor3"
 
 config = {
   "apiKey": "AIzaSyAeMsHJsZrkKdaRD_8dqPS8dkHbK6v9d6I",
@@ -17,24 +26,63 @@ config = {
 firebase = pyrebase.initialize_app(config)
 db = firebase.database()
 
+class Mensaje:
+
+    def __init__(self,n_addr,s_id,val_type,val_val):
+        
+        self.pan_id = PANID
+        self.node_id = n_addr
+        if (s_id == 1):
+            self.sen_id = SEN1
+        elif (s_id == 2):
+            self.sen_id = SEN2
+        elif (s_id == 3):
+            self.sen_id = SEN3
+        self.atrib_type = val_type
+        self.atrib_val = val_val
+
+    def send_sens_val(self):
+        db.child(self.node_id).child(SENSORES).child(self.sen_id).update({"Val":self.atrib_val})
+        print("Valor enviado: {} {} {}".format(hex(self.node_id),self.sen_id,self.atrib_val))
+
+    # def send_act_val(self):
+    #     db.child(self.node_id).child(ACTUADORES).child(self.act_id).update({"Val":self.atrib_val})
+
+    # def retrieve_sens_val(self):
+    #     d = db.child(self.node_id).child(SENSORES).child(self.sen_id).child("Val").get()
+    #     return d.val()
+
+    # def retrieve_act_val(self):
+    #     d = db.child(self.node_id).child(ACTUADORES).child(self.act_id).child("Val").get()
+    #     return d.val()
+
+def set_actuador_callback(nodoId, atcuadorId, callback):
+    global stream
+    stream = db.child(nodoId).child(ACTUADORES).child(atcuadorId).child("Estado").stream(callback)
+    # stream.start_stream()
+
+def close_db():
+    stream.close()
+
+
 # data = {
-#     format(hex(ADDR_NODO_1)): {
-#         "PanId": format(hex(PANID)),
+#     ADDR_NODO_1: {
+#         "PanId": PANID,
 #         "Sensores": {
 #             "Sensor1": {
 #                 "Nombre": "Mortimer",
-#                 "AtribType": "INT",
-#                 "AtribVal": 1,
+#                 "Tipo": "INT",
+#                 "Val": 1,
 #             },
 #             "Sensor2": {
 #                 "Nombre": "Morty",
-#                 "AtribType": "FLOAT",
-#                 "AtribVal": 1.12,
+#                 "Tipo": "FLOAT",
+#                 "Val": 1.12,
 #             },
 #             "Sensor3": {
 #                 "Nombre": "Smith",
-#                 "AtribType": "STRING",
-#                 "AtribVal": "Hola Cat",
+#                 "Tipo": "STRING",
+#                 "Val": "Hola Cat",
 #             },
 #         },
 #         "Actuadores": {
@@ -53,23 +101,23 @@ db = firebase.database()
 #         },
 #     },
         
-#     format(hex(ADDR_NODO_2)): {
-#         "PanId": format(hex(PANID)),
+#     ADDR_NODO_2: {
+#         "PanId": PANID,
 #         "Sensores": {
 #             "Sensor1": {
 #                 "Nombre": "Lux",
-#                 "AtribType": "INT",
-#                 "AtribVal": 2,
+#                 "Tipo": "INT",
+#                 "Val": 2,
 #             },
 #             "Sensor2": {
 #                 "Nombre": "Temp",
-#                 "AtribType": "INT",
-#                 "AtribVal": 3,
+#                 "Tipo": "INT",
+#                 "Val": 3,
 #             },
 #             "Sensor3": {
 #                 "Nombre": "Humedad",
-#                 "AtribType": "INT",
-#                 "AtribVal": 30,
+#                 "Tipo": "INT",
+#                 "Val": 30,
 #             },
 #         },
 #         "Actuadores": {
@@ -88,23 +136,23 @@ db = firebase.database()
 #         },
 #     },
     
-#     format(hex(ADDR_NODO_3)): {
-#         "PanId": format(hex(PANID)),
+#     ADDR_NODO_3: {
+#         "PanId": PANID,
 #         "Sensores": {
 #             "Sensor1": {
 #                 "Nombre": "PushBtn",
-#                 "AtribType": "INT",
-#                 "AtribVal": 30,
+#                 "Tipo": "INT",
+#                 "Val": 30,
 #             },
 #             "Sensor2Id": {
 #                 "Nombre": "---",
-#                 "AtribType": "INT",
-#                 "AtribVal": 30,
+#                 "Tipo": "INT",
+#                 "Val": 30,
 #             },
 #             "Sensor3Id": {
 #                 "Nombre": "Volt",
-#                 "AtribType": "INT",
-#                 "AtribVal": 30,
+#                 "Tipo": "INT",
+#                 "Val": 30,
 #             },
 #         },
 #         "Actuadores": {
@@ -126,29 +174,26 @@ db = firebase.database()
 
 # db.set(data)
 
-print("########## All nodes ##########")
-all_nodes = db.child(format(hex(ADDR_NODO_1))).child("Sensores").get()
+# print("########## All nodes ##########")
+# all_nodes = db.child(ADDR_NODO_1).child("Sensores").get()
 # print(type(all_nodes))
-for node in all_nodes.each():
-    print(node.key())
-    print(node.val())
-    if (type(node.val()) is dict):
-        for inner_node in node.val():
-            # print(inner_node.key())
-            print(inner_node)
+# for node in all_nodes.each():
+#     print(node.key())
+#     print(node.val())
+#     if (type(node.val()) is dict):
+#         for inner_node in node.val():
+#             # print(inner_node.key())
+#             print(inner_node)
 
-print("########## JSON ##########")
-data_encoded = json.loads(all_nodes)
-print(data_encoded)
+# nuevo_valor = 30
+# db.child(ADDR_NODO_1).child(SENSORES).child(SEN1).update({"Val":nuevo_valor})
 
-print("Fin ejecucion")
+# dato = db.child(format(hex(ADDR_NODO_1))).child("Sensores").child("Sensor1").child("Val").get()
+# dato.val() = nuevo_valor
 
-class Nodo:
+# print("Valor actualizado")
 
-    def __init__(self):
-        
-        self.node_id = ADDR_NODO_1
-        self.panid = PANID
-        self.actuadores = []
-        for i in range(0,3):
-            self.actuadores.append(0)
+# dato = db.child(ADDR_NODO_1).child(SENSORES).child(SEN1).child("Nombre").get()
+# print("Recupere el dato: ",dato.val())
+
+# print("Fin carga módulo")
