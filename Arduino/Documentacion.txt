@@ -32,3 +32,8 @@ No usar CS directo a tierra y/o RST a VCC.
 Python:
 
     * TODO: Enviar todo como String o enteros
+
+
+msg_type:
+    0 = sensor
+    1 = comando

@@ -14,6 +14,10 @@ void interrupt_routine();
 void handle_rx();
 void handle_tx();
 
+void interrupt_test(){
+    printf("Funka!!\n");
+}
+
 const int pin_reset = 27;
 const int pin_cs = 26;         // default CS pin on ATmega8/168/328
 const int pin_interrupt = 28;  // default interrupt pin on ATmega8/168/328
@@ -47,18 +51,21 @@ int main() {
     //mrf.write_long(MRF_SLPCON0, 0b00000010);
 
     wiringPiISR (pin_interrupt, INT_EDGE_FALLING, &interrupt_routine) ;
+    wiringPiISR (24, INT_EDGE_FALLING, &interrupt_test) ;
 
     last_time = millis();
     while(1){
-        mrf.check_flags(&handle_rx, &handle_tx);
-        unsigned long current_time = millis();
-        if (current_time - last_time > tx_interval) {
-            last_time = current_time;
-            printf("txxxing...\n");
-            mrf.send16(0x6005, "abcd");
-            // delay(1000);
-            // mrf.send16(0x6003, "pepe");
-        }
+        // mrf.check_flags(&handle_rx, &handle_tx);
+        // unsigned long current_time = millis();
+        // if (current_time - last_time > tx_interval) {
+        //     last_time = current_time;
+        //     printf("txxxing...\n");
+        //     mrf.send16(0x6005, "abcd");
+        //     // delay(1000);
+        //     // mrf.send16(0x6003, "pepe");
+        // }
+        delay(2000);
+        printf("wainting interrupt\n");
     }
     return 0;
 }

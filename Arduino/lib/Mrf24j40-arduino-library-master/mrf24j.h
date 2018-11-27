@@ -220,6 +220,8 @@ class Mrf24j
         void set_palna(boolean enabled);
 
         void send16(word dest16, char * data);
+        void send_value(word dest16, byte msg_type, byte sensorId, byte data_type, int valor);
+        void send_command(word dest16, byte msg_type, byte actuadorId, byte command);
 
         void interrupt_handler(void);
 
