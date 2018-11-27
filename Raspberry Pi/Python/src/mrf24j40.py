@@ -143,6 +143,9 @@ class rx_info_t:
             self.rx_data.append(0)
         self.lqi = 0
         self.rssi = 0
+        self.panid = 0
+        self.srcaddr = 0
+        self.destaddr = 0
 
 class tx_info_t:
     def __init__(self):
@@ -363,6 +366,17 @@ class Mrf24j:
         if (last_interrupt & MRF_I_RXIF):
             
             self.rx_disable()
+
+            # print("panid: 0x") print(read_long(0x305), HEX) print(read_long(0x304), HEX)
+            # print("addr_2: 0x") print(read_long(0x307), HEX) print(read_long(0x306), HEX)
+            # print("addr_3: 0x") print(read_long(0x309), HEX) print(read_long(0x308), HEX)
+            
+            panid_aux = ((self.read_long(0x305) << 8) | self.read_long(0x304))
+            self.rx_info.panid = str(hex(panid_aux))
+            dest_aux = ((self.read_long(0x307) << 8) | self.read_long(0x306))
+            self.rx_info.srcaddr = str(hex(dest_aux))
+            src_aux = ((self.read_long(0x309) << 8) | self.read_long(0x308))
+            self.rx_info.destaddr = str(hex(src_aux))
 
             frame_length = self.read_long(0x300)
             self.rx_info.frame_length = frame_length

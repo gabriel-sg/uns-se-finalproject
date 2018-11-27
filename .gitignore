@@ -2,3 +2,4 @@
 *.code-workspace
 Arduino/.vscode/settings.json
 
+Raspberry Pi/Python/src/__pycache__/sepyrebase.cpython-37.pyc

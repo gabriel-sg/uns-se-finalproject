@@ -2,9 +2,12 @@
 
 import sys
 import os
+import threading
 import pigpio
 import time
-import mfr24j40
+import mrf24j40
+import sepyrebase
+import queue
 
 PANID = 0xcafe
 ADDR_NODO_1 = 0x6001
@@ -38,32 +41,32 @@ def testRW(printResults):
         init_time = int(round(time.time() * 1000))
         print("\nLeyendo " + str(contReadReg) + " registros...\n")
     
-    contReadSucc += assertReadShort("MRF_PACON2", mfr24j40.MRF_PACON2, 0b10001000, printResults)
-    contReadSucc += assertReadShort("MRF_TXSTBL", mfr24j40.MRF_TXSTBL, 0b01110101, printResults)
-    contReadSucc += assertReadShort("MRF_TXBCON1", mfr24j40.MRF_TXBCON1, 0b00110000, printResults)
-    contReadSucc += assertReadLong("MRF_WAKETIMEL", mfr24j40.MRF_WAKETIMEL, 0b00001010, printResults)
-    contReadSucc += assertReadShort("MRF_BBREG2", mfr24j40.MRF_BBREG2, 0b01001000, printResults)
-    contReadSucc += assertReadShort("MRF_BBREG3", mfr24j40.MRF_BBREG3, 0b11011000, printResults)
-    contReadSucc += assertReadShort("MRF_BBREG4", mfr24j40.MRF_BBREG4, 0b10011100, printResults)
-    contReadSucc += assertReadShort("MRF_BBREG6", mfr24j40.MRF_BBREG6, 0b00000001, printResults)
-    contReadSucc += assertReadShort("MRF_INTCON", mfr24j40.MRF_INTCON, 0b11111111, printResults)
+    contReadSucc += assertReadShort("MRF_PACON2", mrf24j40.MRF_PACON2, 0b10001000, printResults)
+    contReadSucc += assertReadShort("MRF_TXSTBL", mrf24j40.MRF_TXSTBL, 0b01110101, printResults)
+    contReadSucc += assertReadShort("MRF_TXBCON1", mrf24j40.MRF_TXBCON1, 0b00110000, printResults)
+    contReadSucc += assertReadLong("MRF_WAKETIMEL", mrf24j40.MRF_WAKETIMEL, 0b00001010, printResults)
+    contReadSucc += assertReadShort("MRF_BBREG2", mrf24j40.MRF_BBREG2, 0b01001000, printResults)
+    contReadSucc += assertReadShort("MRF_BBREG3", mrf24j40.MRF_BBREG3, 0b11011000, printResults)
+    contReadSucc += assertReadShort("MRF_BBREG4", mrf24j40.MRF_BBREG4, 0b10011100, printResults)
+    contReadSucc += assertReadShort("MRF_BBREG6", mrf24j40.MRF_BBREG6, 0b00000001, printResults)
+    contReadSucc += assertReadShort("MRF_INTCON", mrf24j40.MRF_INTCON, 0b11111111, printResults)
 
     contWriteReg = 11
     contWriteSucc = 0
     if (printResults):
         print("\nEscribiendo " + str(contWriteReg) + " registros...\n")
 
-    contWriteSucc += assertWriteShort("MRF_PACON2", mfr24j40.MRF_PACON2, 0x98, printResults)
-    contWriteSucc += assertWriteShort("MRF_TXSTBL", mfr24j40.MRF_TXSTBL, 0x95, printResults)
-    contWriteSucc += assertWriteLong("MRF_RFCON0", mfr24j40.MRF_RFCON0, 0x03, printResults)
-    contWriteSucc += assertWriteLong("MRF_RFCON1", mfr24j40.MRF_RFCON1, 0x01, printResults)
-    contWriteSucc += assertWriteLong("MRF_RFCON2", mfr24j40.MRF_RFCON2, 0x80, printResults)
-    contWriteSucc += assertWriteLong("MRF_RFCON6", mfr24j40.MRF_RFCON6, 0x90, printResults)
-    contWriteSucc += assertWriteLong("MRF_RFCON7", mfr24j40.MRF_RFCON7, 0x80, printResults)
-    contWriteSucc += assertWriteLong("MRF_RFCON8", mfr24j40.MRF_RFCON8, 0x10, printResults)
-    contWriteSucc += assertWriteLong("MRF_SLPCON1", mfr24j40.MRF_SLPCON1, 0x21, printResults)
-    contWriteSucc += assertWriteShort("MRF_BBREG2", mfr24j40.MRF_BBREG2, 0x80, printResults)
-    contWriteSucc += assertWriteShort("MRF_CCAEDTH", mfr24j40.MRF_CCAEDTH, 0x60, printResults)
+    contWriteSucc += assertWriteShort("MRF_PACON2", mrf24j40.MRF_PACON2, 0x98, printResults)
+    contWriteSucc += assertWriteShort("MRF_TXSTBL", mrf24j40.MRF_TXSTBL, 0x95, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON0", mrf24j40.MRF_RFCON0, 0x03, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON1", mrf24j40.MRF_RFCON1, 0x01, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON2", mrf24j40.MRF_RFCON2, 0x80, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON6", mrf24j40.MRF_RFCON6, 0x90, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON7", mrf24j40.MRF_RFCON7, 0x80, printResults)
+    contWriteSucc += assertWriteLong("MRF_RFCON8", mrf24j40.MRF_RFCON8, 0x10, printResults)
+    contWriteSucc += assertWriteLong("MRF_SLPCON1", mrf24j40.MRF_SLPCON1, 0x21, printResults)
+    contWriteSucc += assertWriteShort("MRF_BBREG2", mrf24j40.MRF_BBREG2, 0x80, printResults)
+    contWriteSucc += assertWriteShort("MRF_CCAEDTH", mrf24j40.MRF_CCAEDTH, 0x60, printResults)
 
     if (printResults):
         print("\n------------------Resumen------------------\n")
@@ -108,7 +111,7 @@ def assertReadLong(name, address, shouldBeValue, printResults):
         print(str(name) + ": read value: " + str(readValue) + ", should be: " + str(shouldBeValue))
     return shouldBeValue == readValue
 
-###### HANDLERS ######
+############ HANDLERS ############
 
 def handle_rx():
     print("received a packet {} bytes long\n".format(mrf.get_rxinfo().frame_length))
@@ -118,9 +121,21 @@ def handle_rx():
         for i in range(0,mrf.get_rxinfo().frame_length):
             print(mrf.get_rxbuf()[i])
     
-    print("\r\nASCII data (relevant data):\n")
+    print("\r\nASCII data (relevant data):")
+    p_aux = mrf.get_rxinfo().panid
+    s_aux = mrf.get_rxinfo().srcaddr
+    d_aux = mrf.get_rxinfo().destaddr
+
+    msg_type = mrf.get_rxinfo().rx_data[0]
+    if (msg_type == 0):     # ie. tipo sensor -> data
+        sens_id = mrf.get_rxinfo().rx_data[1]
+        data_type = mrf.get_rxinfo().rx_data[2]
+        valor = (mrf.get_rxinfo().rx_data[3] << 8) | mrf.get_rxinfo().rx_data[4]
+        m_aux = sepyrebase.Mensaje(s_aux,sens_id,data_type,valor)
+        data_queue.put(m_aux)
+    
     for i in range(0,mrf.rx_datalength()):
-        print(str(mrf.get_rxinfo().rx_data[i]),end="")
+        print(str(mrf.get_rxinfo().rx_data[i]) + "-",end="")
     
     print("\r\nLQI/RSSI=")
     print(mrf.get_rxinfo().lqi)
@@ -138,13 +153,118 @@ def interrupt_routine(gpio,level,tick):
     mrf.interrupt_handler()
     print("Ocurrio una interrupcion")
 
-def dummy_cb(gpio,level,tick):
-    print("Ocurrio una dummy")
+# def dummy_cb(gpio,level,tick):
+#     print("Ocurrio una dummy")
 
-###### MAIN ######
+def check_queue_data():
+
+    while True:
+        if not (data_queue.empty()):
+            m_data = data_queue.get()
+            m_data.send_sens_val()
+            print("Elimine elemento de la cola")
+
+        time.sleep(1)
+        print("Hilo check cola datos")
+
+def check_queue_action():
+
+    while True:
+        if not (action_queue.empty()):
+            m_data = action_queue.get()
+            print("Hilo quitando elemento cola: ",end="")
+            print(m_data)
+            if (m_data[0] == ADDR_NODO_1):
+                if (m_data[2]):
+                    mrf.send16(ADDR_NODO_1,str(m_data[1])+"1")
+                else:
+                    mrf.send16(ADDR_NODO_1,str(m_data[1])+"0")
+            elif (m_data[0] == ADDR_NODO_2):
+                if (m_data[2]):
+                    mrf.send16(ADDR_NODO_2,str(m_data[1])+"1")
+                else:
+                    mrf.send16(ADDR_NODO_2,str(m_data[1])+"0")
+            elif (m_data[0] == ADDR_NODO_3):
+                if (m_data[2]):
+                    mrf.send16(ADDR_NODO_3,str(m_data[1])+"1")
+                else:
+                    mrf.send16(ADDR_NODO_3,str(m_data[1])+"0")
+
+        time.sleep(1)
+
+############ Stream DB Functions ############
+
+# NodoId - ActId - Accion
+
+def f11(mensaje):
+    data = mensaje["data"]
+    arr = [ADDR_NODO_1,1,data]
+    action_queue.put(arr)
+
+def f12(mensaje):
+    data = mensaje["data"]
+    arr = [ADDR_NODO_1,2,data]
+    action_queue.put(arr)
+
+def f13(mensaje):
+    data = mensaje["data"]
+    arr = [ADDR_NODO_1,3,data]
+    action_queue.put(arr)
+
+def f21(mensaje):
+    data = mensaje["data"]
+    arr = [ADDR_NODO_2,1,data]
+    action_queue.put(arr)
+
+def f22(mensaje):
+    data = mensaje["data"]
+    arr = [ADDR_NODO_2,2,data]
+    action_queue.put(arr)
+
+def f23(mensaje):
+    data = mensaje["data"]
+    arr = [ADDR_NODO_2,3,data]
+    action_queue.put(arr)
+
+def f31(mensaje):
+    data = mensaje["data"]
+    arr = [ADDR_NODO_3,1,data]
+    action_queue.put(arr)
+
+def f32(mensaje):
+    data = mensaje["data"]
+    arr = [ADDR_NODO_3,2,data]
+    action_queue.put(arr)
+
+def f33(mensaje):
+    data = mensaje["data"]
+    arr = [ADDR_NODO_3,3,data]
+    action_queue.put(arr)
+
+################## MAIN ##################
 
 last_time = 0
 tx_interval = 2000
+check_queue_interval = 5
+data_queue = queue.Queue()
+action_queue = queue.Queue()
+
+############ Stream DB ############
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_1)),sepyrebase.ACT1,f11)
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_1)),sepyrebase.ACT2,f12)
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_1)),sepyrebase.ACT3,f13)
+
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_2)),sepyrebase.ACT1,f21)
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_2)),sepyrebase.ACT2,f22)
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_2)),sepyrebase.ACT3,f23)
+
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_3)),sepyrebase.ACT1,f31)
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_3)),sepyrebase.ACT2,f32)
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_3)),sepyrebase.ACT3,f33)
+
+############ Módulo MRF24J40 ############
+# Crea objeto del módulo MRF
+mrf = mrf24j40.Mrf24j(pin_reset, pin_cs, pin_interrupt)
 
 if (run_test):
     mrf.reset()
@@ -171,11 +291,6 @@ if (run_test):
     print("\n")
     print("-------------------------------------------")
 
-###### Módulo MRF24J40 ######
-
-# Crea objeto del módulo MRF
-mrf = mfr24j40.Mrf24j(pin_reset, pin_cs, pin_interrupt)
-
 mrf.reset()
 mrf.init()
 mrf.set_channel(18)
@@ -190,38 +305,53 @@ mrf.set_interrupts()
 
 ###### Attach Interruption Handler ######
 cb0 = pi.callback(pin_interrupt,pigpio.EITHER_EDGE,interrupt_routine)
-cb1 = pi.callback(4,pigpio.EITHER_EDGE,dummy_cb)
+# cb1 = pi.callback(4,pigpio.EITHER_EDGE,dummy_cb)
 
 print("PANId: 0x{:04X} - Addr: 0x{:04X}".format(mrf.get_pan(),mrf.address16_read()))
 
 last_time = int(round(time.time() * 1000))
 
-###### LOOP ######
+td = threading.Thread(target=check_queue_data,args="")
+td.setDaemon(True)
+td.start()
+
+# ta = threading.Thread(target=check_queue_action,args="")
+# ta.setDaemon(True)
+# ta.start()
+
+############ LOOP ############
 
 while True:
     try:
-        mrf.check_flags(handle_rx, handle_tx)
         current_time = int(round(time.time() * 1000))
         if (current_time - last_time > tx_interval):
             last_time = current_time
-            print("rxxxing...\n")
+            print("rxxxing...")
             # mrf.send16(0x6005, "puto el que lee porque el que lee se la come")
             # time.sleep(1)
     
-        # time.sleep(60)
+        time.sleep(1)
+        mrf.check_flags(handle_rx, handle_tx)
     except KeyboardInterrupt:
         break
 
 print("\nSaliendo...")
 
+pi.stop()
+
 mrf.close()
 
 cb0.cancel()
-cb1.cancel()
+# cb1.cancel()
 
-pi.stop()
+sepyrebase.close_db()
 
-###### END MAIN ######
+td.join()
+# ta.join()
+
+print("Finalizado.")
+
+############ END MAIN ############
 
 # def clear_all():
 #     """Clears all the variables from the workspace of the spyder application."""
