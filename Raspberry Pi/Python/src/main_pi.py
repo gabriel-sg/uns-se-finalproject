@@ -116,21 +116,21 @@ def assertReadLong(name, address, shouldBeValue, printResults):
 
 ############ HANDLERS ############
 def interrupt_routine():
-    print("\nOcurrio una interrupcion")
+    # print("Ocurrio una interrupcion")
     mrf.interrupt_handler()
 
 def handle_rx():
-    print("received a packet {} bytes long\n".format(mrf.get_rxinfo().frame_length))
+    # print("received a packet {} bytes long\n".format(mrf.get_rxinfo().frame_length))
 
     if (mrf.get_bufferPHY()):
         print("Packet data (PHY Payload):\n")
         for i in range(0,mrf.get_rxinfo().frame_length):
             print(mrf.get_rxbuf()[i])
 
-    print("\r\nASCII data (relevant data):")
-    p_aux = mrf.get_rxinfo().panid
+    # print("\r\nASCII data (relevant data):")
+    # p_aux = mrf.get_rxinfo().panid
     s_aux = mrf.get_rxinfo().srcaddr
-    d_aux = mrf.get_rxinfo().destaddr
+    # d_aux = mrf.get_rxinfo().destaddr
 
     msg_type = mrf.get_rxinfo().rx_data[0]
     if (msg_type == 0):     # ie. tipo sensor -> data
@@ -140,112 +140,179 @@ def handle_rx():
         m_aux = sepyrebase.Mensaje(s_aux,sens_id,data_type,valor)
         data_queue.put(m_aux)
 
-    for i in range(0,mrf.rx_datalength()):
-        print(str(mrf.get_rxinfo().rx_data[i]) + "-",end="")
+    # for i in range(0,mrf.rx_datalength()):
+    #     print(str(mrf.get_rxinfo().rx_data[i]) + "-",end="")
 
-    print("\r\nLQI/RSSI=", end="")
-    print(mrf.get_rxinfo().lqi, end="")
-    print("/", end="")
-    print(mrf.get_rxinfo().rssi)
+    # print("\r\nLQI/RSSI=", end="")
+    # print(mrf.get_rxinfo().lqi, end="")
+    # print("/", end="")
+    # print(mrf.get_rxinfo().rssi)
 
 def handle_tx():
-    print("handle_tx()" + str(mrf.get_txinfo().tx_ok))
+    # print("handle_tx()" + str(mrf.get_txinfo().tx_ok))
     if (mrf.get_txinfo().tx_ok):
-        print("TX went ok, got ack")
+        # print("TX went ok, got ack")
+        pass
     else:
         print("TX failed after {} retries\n".format(mrf.get_txinfo().retries))
 
-
 def check_queue_data():
-
-    while True:
+    global end_td
+    while not end_td:
         if not (data_queue.empty()):
             m_data = data_queue.get()
             m_data.send_sens_val()
-            print("Elimine elemento de la cola")
-
-        time.sleep(1)
-        print("Hilo check cola datos")
 
 def check_queue_action():
-
-    while True:
+    global end_ta
+    while not end_ta:
         if not (action_queue.empty()):
             m_data = action_queue.get()
-            print("Hilo quitando elemento cola: ",end="")
-            print(m_data)
+            init_time_qa = int(round(time.time() * 1000))
             if (m_data[0] == ADDR_NODO_1):
                 if (m_data[2]):
-                    mrf.send16(ADDR_NODO_1,str(m_data[1])+"1")
+                    mrf.send_command(ADDR_NODO_1, m_data[1], 1)
                 else:
-                    mrf.send16(ADDR_NODO_1,str(m_data[1])+"0")
+                    mrf.send_command(ADDR_NODO_1, m_data[1], 0)
             elif (m_data[0] == ADDR_NODO_2):
                 if (m_data[2]):
-                    mrf.send16(ADDR_NODO_2,str(m_data[1])+"1")
+                    mrf.send_command(ADDR_NODO_2, m_data[1], 1)
                 else:
-                    mrf.send16(ADDR_NODO_2,str(m_data[1])+"0")
+                    mrf.send_command(ADDR_NODO_2, m_data[1], 0)
             elif (m_data[0] == ADDR_NODO_3):
                 if (m_data[2]):
-                    mrf.send16(ADDR_NODO_3,str(m_data[1])+"1")
+                    mrf.send_command(ADDR_NODO_3, m_data[1], 1)
                 else:
-                    mrf.send16(ADDR_NODO_3,str(m_data[1])+"0")
-
-        time.sleep(1)
+                    mrf.send_command(ADDR_NODO_3, m_data[1], 0)
+            init_time_qa = int(round(time.time() * 1000)) - init_time_qa
+            print("Comando enviado en: "+ str(init_time_qa))
 
 ############ Stream DB Functions ############
-
 # NodoId - ActId - Accion
-
+init_f11 = 1
+init_f12 = 1
+init_f13 = 1
+init_f14 = 1
 def f11(mensaje):
-    data = mensaje["data"]
-    arr = [ADDR_NODO_1,1,data]
-    action_queue.put(arr)
+    global init_f11
+    if init_f11:
+        init_f11 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_1,1,data]
+        action_queue.put(arr)
 
 def f12(mensaje):
-    data = mensaje["data"]
-    arr = [ADDR_NODO_1,2,data]
-    action_queue.put(arr)
+    global init_f12
+    if init_f12:
+        init_f12 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_1,2,data]
+        action_queue.put(arr)
 
 def f13(mensaje):
-    data = mensaje["data"]
-    arr = [ADDR_NODO_1,3,data]
-    action_queue.put(arr)
+    global init_f13
+    if init_f13:
+        init_f13 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_1,3,data]
+        action_queue.put(arr)
 
+def f14(mensaje):
+    global init_f14
+    if init_f14:
+        init_f14 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_1,4,data]
+        action_queue.put(arr)
+
+init_f21 = 1
+init_f22 = 1
+init_f23 = 1
+init_f24 = 1
 def f21(mensaje):
-    data = mensaje["data"]
-    arr = [ADDR_NODO_2,1,data]
-    action_queue.put(arr)
+    global init_f21
+    if init_f21:
+        init_f21 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_2,1,data]
+        action_queue.put(arr)
 
 def f22(mensaje):
-    data = mensaje["data"]
-    arr = [ADDR_NODO_2,2,data]
-    action_queue.put(arr)
+    global init_f22
+    if init_f22:
+        init_f22 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_2,2,data]
+        action_queue.put(arr)
 
 def f23(mensaje):
-    data = mensaje["data"]
-    arr = [ADDR_NODO_2,3,data]
-    action_queue.put(arr)
+    global init_f23
+    if init_f23:
+        init_f23 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_2,3,data]
+        action_queue.put(arr)
 
+def f24(mensaje):
+    global init_f24
+    if init_f24:
+        init_f24 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_2,4,data]
+        action_queue.put(arr)
+
+init_f31 = 1
+init_f32 = 1
+init_f33 = 1
+init_f34 = 1
 def f31(mensaje):
-    data = mensaje["data"]
-    arr = [ADDR_NODO_3,1,data]
-    action_queue.put(arr)
+    global init_f31
+    if init_f31:
+        init_f31 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_3,1,data]
+        action_queue.put(arr)
 
 def f32(mensaje):
-    data = mensaje["data"]
-    arr = [ADDR_NODO_3,2,data]
-    action_queue.put(arr)
+    global init_f32
+    if init_f32:
+        init_f32 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_3,2,data]
+        action_queue.put(arr)
 
 def f33(mensaje):
-    data = mensaje["data"]
-    arr = [ADDR_NODO_3,3,data]
-    action_queue.put(arr)
+    global init_f33
+    if init_f33:
+        init_f33 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_3,3,data]
+        action_queue.put(arr)
+
+def f34(mensaje):
+    global init_f34
+    if init_f34:
+        init_f34 = 0
+    else:
+        data = mensaje["data"]
+        arr = [ADDR_NODO_3,4,data]
+        action_queue.put(arr)
 
 ################## MAIN ##################
 
 last_time = 0
-tx_interval = 3000
-check_queue_interval = 5
+tx_interval = 1000
 data_queue = queue.Queue()
 action_queue = queue.Queue()
 
@@ -253,15 +320,17 @@ action_queue = queue.Queue()
 sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_1)),sepyrebase.ACT1,f11)
 sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_1)),sepyrebase.ACT2,f12)
 sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_1)),sepyrebase.ACT3,f13)
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_1)),sepyrebase.ACT4,f14)
 
 sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_2)),sepyrebase.ACT1,f21)
 sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_2)),sepyrebase.ACT2,f22)
 sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_2)),sepyrebase.ACT3,f23)
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_2)),sepyrebase.ACT4,f24)
 
 sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_3)),sepyrebase.ACT1,f31)
 sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_3)),sepyrebase.ACT2,f32)
 sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_3)),sepyrebase.ACT3,f33)
-
+sepyrebase.set_actuador_callback(str(hex(ADDR_NODO_3)),sepyrebase.ACT4,f34)
 
 if (run_test):
     print("\nRealizando test de lectura y escritura...")
@@ -294,31 +363,35 @@ mrf.set_palna(True)
 mrf.set_interrupts()
 # mrf.set_bufferPHY(true)
 
-###### Attach Interruption Handler ######
+############ Attach Interruption Handler ############
 wiringpi.wiringPiISR(pin_interrupt, wiringpi.GPIO.INT_EDGE_FALLING, interrupt_routine)
 
 print("PANId: 0x{:04X} - Addr: 0x{:04X}".format(mrf.get_pan(),mrf.address16_read()))
 
 last_time = int(round(time.time() * 1000))
 
+### Thread que envia mensajes con datos de sensores a la bd.
+end_td = 0
 td = threading.Thread(target=check_queue_data,args="")
-td.setDaemon(True)
+td.setDaemon(False)
 td.start()
 
-# ta = threading.Thread(target=check_queue_action,args="")
-# ta.setDaemon(True)
-# ta.start()
+### Thread que envía las acciones a los actuadores.
+end_ta = 0
+ta = threading.Thread(target=check_queue_action,args="")
+ta.setDaemon(False)
+ta.start()
 
 ############ LOOP ############
 
 while True:
     try:
-        current_time = int(round(time.time() * 1000))
-        if (current_time - last_time > tx_interval):
-            last_time = current_time
-            print("txxxing...")
-            # mrf.send16(0x6005, "puto el que lee porque el que lee se la come")
-            mrf.send_command(0x6003, 1, 1)
+        # current_time = int(round(time.time() * 1000))
+        # if (current_time - last_time > tx_interval):
+        #     last_time = current_time
+            # print("Comunicando...")
+            # mrf.send16(0x6005, "test comunicacion")
+            # mrf.send_command(0x6003, 1, 1)
             # time.sleep(1)
 
         mrf.check_flags(handle_rx, handle_tx)
@@ -329,8 +402,13 @@ print("\nSaliendo...")
 
 sepyrebase.close_db()
 
-#td.join()
-# ta.join()
+mrf.close()
+
+end_td = 1
+end_ta = 1
+
+td.join()
+ta.join()
 
 print("Finalizado.")
 

@@ -1,1 +1,0 @@
-copy Python\src\sepyrebase.py \\RASPBERRYPI\iot

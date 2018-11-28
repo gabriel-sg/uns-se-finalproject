@@ -9,11 +9,13 @@ ACTUADORES = "Actuadores"
 ACT1 = "Actuador1"
 ACT2 = "Actuador2"
 ACT3 = "Actuador3"
+ACT4 = "Actuador4"
 
 SENSORES = "Sensores"
 SEN1 = "Sensor1"
 SEN2 = "Sensor2"
 SEN3 = "Sensor3"
+SEN4 = "Sensor4"
 
 config = {
   "apiKey": "AIzaSyAeMsHJsZrkKdaRD_8dqPS8dkHbK6v9d6I",
@@ -38,12 +40,14 @@ class Mensaje:
             self.sen_id = SEN2
         elif (s_id == 3):
             self.sen_id = SEN3
+        elif (s_id == 4):
+            self.sen_id = SEN4
         self.atrib_type = val_type
         self.atrib_val = val_val
 
     def send_sens_val(self):
         db.child(self.node_id).child(SENSORES).child(self.sen_id).update({"Val":self.atrib_val})
-        print("Valor enviado: {} {} {}".format(hex(self.node_id),self.sen_id,self.atrib_val))
+        # print("Valor enviado: {} {} {}".format(self.node_id,self.sen_id,self.atrib_val))
 
     # def send_act_val(self):
     #     db.child(self.node_id).child(ACTUADORES).child(self.act_id).update({"Val":self.atrib_val})
@@ -84,6 +88,11 @@ def close_db():
 #                 "Tipo": "STRING",
 #                 "Val": "Hola Cat",
 #             },
+#             "Sensor4": {
+#                 "Nombre": "Smith2",
+#                 "Tipo": "STRING",
+#                 "Val": "Hola",
+#             },
 #         },
 #         "Actuadores": {
 #             "Actuador1": {
@@ -96,6 +105,10 @@ def close_db():
 #             },
 #             "Actuador3": {
 #                 "Nombre": "Smithty",
+#                 "Estado": "OFF",
+#             },
+#             "Actuador4": {
+#                 "Nombre": "Smithty2",
 #                 "Estado": "OFF",
 #             },
 #         },
@@ -119,6 +132,11 @@ def close_db():
 #                 "Tipo": "INT",
 #                 "Val": 30,
 #             },
+#             "Sensor4": {
+#                 "Nombre": "Humedad2",
+#                 "Tipo": "INT",
+#                 "Val": 37,
+#             },
 #         },
 #         "Actuadores": {
 #             "Actuador1": {
@@ -133,6 +151,10 @@ def close_db():
 #                 "Nombre": "Buzzer",
 #                 "Estado": "OFF",
 #             },
+#             "Actuador4": {
+#                 "Nombre": "Buzzer2",
+#                 "Estado": "OFF",
+#             },
 #         },
 #     },
     
@@ -144,28 +166,37 @@ def close_db():
 #                 "Tipo": "INT",
 #                 "Val": 30,
 #             },
-#             "Sensor2Id": {
+#             "Sensor2": {
 #                 "Nombre": "---",
 #                 "Tipo": "INT",
 #                 "Val": 30,
 #             },
-#             "Sensor3Id": {
+#             "Sensor3": {
 #                 "Nombre": "Volt",
 #                 "Tipo": "INT",
 #                 "Val": 30,
 #             },
+#             "Sensor4": {
+#                 "Nombre": "Volt2",
+#                 "Tipo": "INT",
+#                 "Val": 37,
+#             },
 #         },
 #         "Actuadores": {
-#             "Actuador1Id": {
+#             "Actuador1": {
 #                 "Nombre": "BtnOK",
 #                 "Estado": "OFF"
 #             },
-#             "Actuador2Id": {
+#             "Actuador2": {
 #                 "Nombre": "LED",
 #                 "Estado": "OFF"
 #             },
-#             "Actuador3Id": {
+#             "Actuador3": {
 #                 "Nombre": "7-Segs",
+#                 "Estado": "OFF"
+#             }
+#             "Actuador4": {
+#                 "Nombre": "7-Segs2",
 #                 "Estado": "OFF"
 #             }
 #         }
