@@ -1,5 +1,6 @@
 import wiringpi
 import time
+from threading import Lock
 
 ###### Constantes ######
 
@@ -157,6 +158,11 @@ class Mrf24j:
 
     wiringpi.wiringPiSetup()
 
+    mrf_lock = Lock()
+
+    pan_id = 0
+    addr_id = 0
+
     def __init__(self, pin_reset, pin_chip_select, pin_interrupt):
         self._pin_reset = pin_reset
         self._pin_cs = pin_chip_select
@@ -166,7 +172,7 @@ class Mrf24j:
         wiringpi.pinMode(self._pin_cs,1)
         wiringpi.pinMode(self._pin_int,0)
 
-        wiringpi.wiringPiSPISetup(0, 500000) # channel 0 (not used), 500 Khz
+        wiringpi.wiringPiSPISetup(0, 500000) # channel 0 (not used), 500 Khz / 2Mhz
 
         self.rx_buf = []
         for i in range(0,127):
@@ -198,13 +204,16 @@ class Mrf24j:
         return rx_tuple[1][0]
 
     def read_short(self, address):
+        self.mrf_lock.acquire()
         wiringpi.digitalWrite(self._pin_cs, 0)
         self.spi_transfer(address << 1 & 0b01111110)
         ret = self.spi_transfer(0)
         wiringpi.digitalWrite(self._pin_cs, 1)
+        self.mrf_lock.release()
         return ret
 
     def read_long(self, address):
+        self.mrf_lock.acquire()
         wiringpi.digitalWrite(self._pin_cs, 0)
         ahigh = address >> 3
         alow = address << 5
@@ -212,15 +221,19 @@ class Mrf24j:
         self.spi_transfer(alow)
         ret = self.spi_transfer(0)
         wiringpi.digitalWrite(self._pin_cs, 1)
+        self.mrf_lock.release()
         return ret
 
     def write_short(self, address, data):
+        self.mrf_lock.acquire()
         wiringpi.digitalWrite(self._pin_cs, 0)
         self.spi_transfer((address<<1 & 0b01111110) | 0x01)
         self.spi_transfer(data)
         wiringpi.digitalWrite(self._pin_cs, 1)
+        self.mrf_lock.release()
 
     def write_long(self, address, data):
+        self.mrf_lock.acquire()
         wiringpi.digitalWrite(self._pin_cs, 0)
         ahigh = address >> 3
         alow = address << 5
@@ -228,59 +241,64 @@ class Mrf24j:
         self.spi_transfer(alow | 0x10)
         self.spi_transfer(data)
         wiringpi.digitalWrite(self._pin_cs, 1)
+        self.mrf_lock.release()
 
     def init(self):
 
-        self.write_short(MRF_PACON2, 0x98) # – Initialize FIFOEN = 1 and TXONTS = 0x6.
-        self.write_short(MRF_TXSTBL, 0x95)# – Initialize RFSTBL = 0x9.
+        self.write_short(MRF_PACON2, 0x98)      # – Initialize FIFOEN = 1 and TXONTS = 0x6.
+        self.write_short(MRF_TXSTBL, 0x95)      # – Initialize RFSTBL = 0x9.
 
-        self.write_long(MRF_RFCON0, 0x03) # – Initialize RFOPT = 0x03.
-        self.write_long(MRF_RFCON1, 0x01) # – Initialize VCOOPT = 0x02.
-        self.write_long(MRF_RFCON2, 0x80) # – Enable PLL (PLLEN = 1).
-        self.write_long(MRF_RFCON6, 0x90) # – Initialize TXFIL = 1 and 20MRECVR = 1.
-        self.write_long(MRF_RFCON7, 0x80) # – Initialize SLPCLKSEL = 0x2 (100 kHz Internal oscillator).
-        self.write_long(MRF_RFCON8, 0x10) # – Initialize RFVCO = 1.
-        self.write_long(MRF_SLPCON1, 0x21) # – Initialize CLKOUTEN = 1 and SLPCLKDIV = 0x01.
+        self.write_long(MRF_RFCON0, 0x03)       # – Initialize RFOPT = 0x03.
+        self.write_long(MRF_RFCON1, 0x01)       # – Initialize VCOOPT = 0x02.
+        self.write_long(MRF_RFCON2, 0x80)       # – Enable PLL (PLLEN = 1).
+        self.write_long(MRF_RFCON6, 0x90)       # – Initialize TXFIL = 1 and 20MRECVR = 1.
+        self.write_long(MRF_RFCON7, 0x80)       # – Initialize SLPCLKSEL = 0x2 (100 kHz Internal oscillator).
+        self.write_long(MRF_RFCON8, 0x10)       # – Initialize RFVCO = 1.
+        self.write_long(MRF_SLPCON1, 0x21)      # – Initialize CLKOUTEN = 1 and SLPCLKDIV = 0x01.
 
-        self.write_short(MRF_BBREG2, 0x80) # Set CCA mode to ED
-        self.write_short(MRF_CCAEDTH, 0x60) # – Set CCA ED threshold.
-        self.write_short(MRF_BBREG6, 0x40) # – Set appended RSSI value to RXFIFO.
+        self.write_short(MRF_BBREG2, 0x80)      # Set CCA mode to ED
+        self.write_short(MRF_CCAEDTH, 0x60)     # – Set CCA ED threshold.
+        self.write_short(MRF_BBREG6, 0x40)      # – Set appended RSSI value to RXFIFO.
 
-        self.write_short(MRF_RFCTL, 0x04) #  – Reset RF state machine.
-        self.write_short(MRF_RFCTL, 0x00) # part 2
-        time.sleep(0.001) # delay at least 192usec
+        self.write_short(MRF_RFCTL, 0x04)       #  – Reset RF state machine.
+        self.write_short(MRF_RFCTL, 0x00)       # part 2
+        time.sleep(0.001)                       # delay at least 192usec
 
-    def get_pan(self):              # return uint16_t
-        panh = self.read_short(MRF_PANIDH)
-        return panh << 8 | self.read_short(MRF_PANIDL)
+    def get_pan(self):                          # return uint16_t
+        return self.pan_id
+        # panh = self.read_short(MRF_PANIDH)
+        # return panh << 8 | self.read_short(MRF_PANIDL)
 
-    def set_pan(self,panid):         # panid uint16_t
+    def set_pan(self,panid):                     # panid uint16_t
         self.write_short(MRF_PANIDH, panid >> 8)
         self.write_short(MRF_PANIDL, panid & 0xff)
+        self.pan_id = panid
 
-    def address16_write(self,address16):     # addr uint16_t
+    def address16_write(self,address16):        # addr uint16_t
         self.write_short(MRF_SADRH, address16 >> 8)
         self.write_short(MRF_SADRL, address16 & 0xff)
+        self.addr_id = address16
 
-    def address16_read(self):       # return uint16_t
-        a16h = self.read_short(MRF_SADRH)
-        return a16h << 8 | self.read_short(MRF_SADRL)
+    def address16_read(self):                   # return uint16_t
+        # a16h = self.read_short(MRF_SADRH)
+        # return a16h << 8 | self.read_short(MRF_SADRL)
+        return self.addr_id
 
     def set_interrupts(self):
         self.write_short(MRF_INTCON, 0b11110110)
 
-    def set_promiscuous(self,enabled):       # enables bool
+    def set_promiscuous(self,enabled):          # enables bool
         if enabled:
             self.write_short(MRF_RXMCR, 0x01)
         else:
             self.write_short(MRF_RXMCR, 0x00)
 
-    def set_channel(self,channel):           # channel uint8_t
+    def set_channel(self,channel):               # channel uint8_t
         self.write_long(MRF_RFCON0, (((channel - 11) << 4) | 0x03))
 
-        self.write_short(MRF_RFCTL, 0x04) #  – Reset RF state machine.
-        self.write_short(MRF_RFCTL, 0x00) # part 2
-        time.sleep(0.001) # delay at least 192usec
+        self.write_short(MRF_RFCTL, 0x04)       #  – Reset RF state machine.
+        self.write_short(MRF_RFCTL, 0x00)       # part 2
+        time.sleep(0.001)                       # delay at least 192usec
 
     def rx_enable(self):
         self.write_short(MRF_RXFLUSH, 0x01)
@@ -292,34 +310,34 @@ class Mrf24j:
     def rx_flush(self):
         self.write_short(MRF_RXFLUSH, 0x01)
 
-    def get_rxinfo(self):           # return rx_info_t *
+    def get_rxinfo(self):                       # return rx_info_t *
         return self.rx_info
 
-    def get_txinfo(self):           # return tx_info_t *
+    def get_txinfo(self):                       # return tx_info_t *
         return self.tx_info
 
-    def get_rxbuf(self):            # return uint8_t *
+    def get_rxbuf(self):                        # return uint8_t *
         return self.rx_buf
 
-    def  rx_datalength(self):        # return int
+    def  rx_datalength(self):                   # return int
         return (self.rx_info.frame_length - self.bytes_nodata)
 
-    def set_ignoreBytes(self,ib):    # ib int
+    def set_ignoreBytes(self,ib):               # ib int
         self.ignoreBytes = ib
 
-    def set_bufferPHY(self,bp):      # bp bool
+    def set_bufferPHY(self,bp):                 # bp bool
         self.bufPHY = bp
 
-    def get_bufferPHY(self):        # return bool
+    def get_bufferPHY(self):                    # return bool
         return self.bufPHY
 
-    def set_palna(self,enabled):     # enabled bool
+    def set_palna(self,enabled):                # enabled bool
         if enabled:
             self.write_long(MRF_TESTMODE, 0x07)
         else:
             self.write_long(MRF_TESTMODE, 0x00)
 
-    def send16(self,dest16, data):   # dest16 uint16_t
+    def send16(self,dest16, data):              # dest16 uint16_t
         data_len = len(data)
         d_send = data.encode()
         i = 0
@@ -334,21 +352,20 @@ class Mrf24j:
         self.write_long(i, 1)
         i += 1
 
-        panid = self.get_pan()
-
-        self.write_long(i, panid & 0xff)
+        # panid = self.get_pan()
+        self.write_long(i, self.pan_id & 0xff)
         i += 1
-        self.write_long(i, panid >> 8)
+        self.write_long(i, self.pan_id >> 8)
         i += 1
         self.write_long(i, dest16 & 0xff)
         i += 1
         self.write_long(i, dest16 >> 8)
         i += 1
 
-        src16 = self.address16_read()
-        self.write_long(i, src16 & 0xff)
+        # src16 = self.address16_read()
+        self.write_long(i, self.addr_id & 0xff)
         i += 1
-        self.write_long(i, src16 >> 8)
+        self.write_long(i, self.addr_id >> 8)
         i += 1
 
         i += self.ignoreBytes
@@ -372,21 +389,20 @@ class Mrf24j:
         self.write_long(i, 1)
         i += 1
 
-        panid = self.get_pan()
-
-        self.write_long(i, panid & 0xff)
+        # panid = self.get_pan()
+        self.write_long(i, self.pan_id & 0xff)
         i += 1
-        self.write_long(i, panid >> 8)
+        self.write_long(i, self.pan_id >> 8)
         i += 1
         self.write_long(i, dest16 & 0xff)
         i += 1
         self.write_long(i, dest16 >> 8)
         i += 1
 
-        src16 = self.address16_read()
-        self.write_long(i, src16 & 0xff)
+        # src16 = self.address16_read()
+        self.write_long(i, self.addr_id & 0xff)
         i += 1
-        self.write_long(i, src16 >> 8)
+        self.write_long(i, self.addr_id >> 8)
         i += 1
 
         i += self.ignoreBytes
@@ -456,4 +472,5 @@ class Mrf24j:
             self.flag_got_tx = 0
             tx_handler()
 
-
+    def close(self):
+        self.mrf_lock.release()

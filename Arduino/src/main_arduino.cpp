@@ -24,7 +24,7 @@ const int pin_interrupt = 2;  // default interrupt pin on ATmega8/168/328
 Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
 unsigned long last_time;
-unsigned long tx_interval = 5000;
+unsigned long tx_interval = 2500;
 
 int luzValue = 0;
 
@@ -96,7 +96,7 @@ void loop() {
         send_pkg(2, luzValue);
         last_time = current_time;
     }
-    button();
+    //button();
 }
 
 void send_pkg(byte sensorId, int value) {
