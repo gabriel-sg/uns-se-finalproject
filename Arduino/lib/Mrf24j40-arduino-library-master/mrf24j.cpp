@@ -40,7 +40,7 @@ Mrf24j::Mrf24j(int pin_reset, int pin_chip_select, int pin_interrupt) {
 
     SPI.setBitOrder(MSBFIRST) ;
     SPI.setDataMode(SPI_MODE0);
-    SPI.setClockDivider(SPI_CLOCK_DIV64); // 250 KHz
+    SPI.setClockDivider(SPI_CLOCK_DIV32); // 250 KHz
     SPI.begin();
 }
 
@@ -52,47 +52,51 @@ void Mrf24j::reset(void) {
 }
 
 byte Mrf24j::read_short(byte address) {
+    noInterrupts();
     digitalWrite(_pin_cs, LOW);
     // 0 top for short addressing, 0 bottom for read
     SPI.transfer(address<<1 & 0b01111110);
     // delay(10);
     byte ret = SPI.transfer(0x00);
     digitalWrite(_pin_cs, HIGH);
+    interrupts();
     return ret;
 }
 
 byte Mrf24j::read_long(word address) {
+    noInterrupts();
     digitalWrite(_pin_cs, LOW);
     byte ahigh = address >> 3;
     byte alow = address << 5;
-    noInterrupts();
     SPI.transfer(0x80 | ahigh);  // high bit for long
     SPI.transfer(alow);
     byte ret = SPI.transfer(0);
-    interrupts();
     digitalWrite(_pin_cs, HIGH);
+    interrupts();
     return ret;
 }
 
 
 void Mrf24j::write_short(byte address, byte data) {
+    noInterrupts();
     digitalWrite(_pin_cs, LOW);
     // 0 for top short address, 1 bottom for write
     SPI.transfer((address<<1 & 0b01111110) | 0x01);
     SPI.transfer(data);
     digitalWrite(_pin_cs, HIGH);
+    interrupts();
 }
 
 void Mrf24j::write_long(word address, byte data) {
+    noInterrupts();
     digitalWrite(_pin_cs, LOW);
     byte ahigh = address >> 3;
     byte alow = address << 5;
-    noInterrupts();
     SPI.transfer(0x80 | ahigh);  // high bit for long
     SPI.transfer(alow | 0x10);  // last bit for write
     SPI.transfer(data);
-    interrupts();
     digitalWrite(_pin_cs, HIGH);
+    interrupts();
 }
 
 word Mrf24j::get_pan(void) {
