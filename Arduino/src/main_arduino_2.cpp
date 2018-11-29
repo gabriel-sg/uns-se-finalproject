@@ -16,29 +16,37 @@ void button();
 void read_command();
 void do_command(uint8_t actuadorId, uint8_t command);
 int adc_to_lux(int adcValue);
+int adc_to_temp(int adcValue);
 
-const int pin_reset = 10;
-const int pin_cs = 9;
+const int pin_reset = 8;
+const int pin_cs = 6;
 const int pin_interrupt = 2;  // default interrupt pin on ATmega8/168/328
 
 Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
 unsigned long last_time;
-unsigned long tx_interval = 2500;
+unsigned long tx_interval = 2400;
 
 int luzValue = 0;
+// int tempValue = 0;
 int lastButtonState = 0;
 int toggleValue = 0;
 
-int pin_blueLed = 5;
-int pin_greenLed = 4;
+int pin_redLed = 5;
+int pin_yellowLed = 4;
 int pin_sensorLuz = A0;
 int pin_button = 7;
 int pin_buzzer = 3;
+// int pin_sensorTemp = A3;
+
+// Define the B-value of the thermistor.
+// This value is a property of the thermistor used in the Grove - Temperature Sensor,
+// and used to convert from the analog value it measures and a temperature value.
+const int B = 3975;
 
 // ID actuadores
-const uint8_t actuador_blueLed = 1;
-const uint8_t actuador_buzzer = 2;
+const uint8_t actuador_redLed = 1;
+// const uint8_t actuador_buzzer = 2;
 
 void setup() {
     Serial.begin(9600);
@@ -51,7 +59,7 @@ void setup() {
     }
 
     uint16_t panId = 0xcafe;
-    uint16_t address = 0x6003;
+    uint16_t address = 0x6002;
     uint8_t channel = 18;
     boolean promiscuous = false;
     boolean palna = true;
@@ -67,18 +75,18 @@ void setup() {
     last_time = millis();
 
     // Set led (transfer indicator)
-    pinMode(pin_greenLed, OUTPUT);
-    digitalWrite(pin_greenLed, LOW);
+    pinMode(pin_yellowLed, OUTPUT);
+    digitalWrite(pin_yellowLed, LOW);
     // Set led (como actuador)
-    pinMode(pin_blueLed, OUTPUT);
-    digitalWrite(pin_blueLed, LOW);
+    pinMode(pin_redLed, OUTPUT);
+    digitalWrite(pin_redLed, LOW);
     // Buzzer
-    pinMode(pin_buzzer, OUTPUT);
-    digitalWrite(pin_buzzer, LOW);
+    // pinMode(pin_buzzer, OUTPUT);
+    // digitalWrite(pin_buzzer, LOW);
     // Set sensor luz
     pinMode(pin_sensorLuz, INPUT);
     // Button
-    pinMode(pin_button, INPUT);
+    // pinMode(pin_button, INPUT);
 }
 
 void interrupt_routine() {
@@ -91,23 +99,32 @@ void loop() {
     if ((current_time - last_time) > tx_interval) {
         // Luz
         // noInterrupts();
-        luzValue = analogRead(A0);
+        luzValue = analogRead(pin_sensorLuz);
         // interrupts();
         luzValue = adc_to_lux(luzValue);
         // Serial.println("Luminocidad: " + String(luzValue) + "\n");
-        // send_pkg(2, luzValue);
+        send_pkg(2, luzValue);
+
+        // delay(500);
+
+        // Tempreratura
+        // tempValue = analogRead(pin_sensorTemp);
+        // tempValue = adc_to_temp(tempValue);
+        //Serial.println("Tempretarura: " + String(tempValue) + "\n");
+        // send_pkg(1, tempValue);
+
         last_time = current_time;
     }
-    //button();
+    // button();
 }
 
 void send_pkg(byte sensorId, int value) {
-    digitalWrite(pin_greenLed, HIGH);
+    digitalWrite(pin_yellowLed, HIGH);
     // Serial.println("rxxxing...");
     // Serial.println("txxxing...\n");
     mrf.send_value(0x6001, 0, sensorId, 1, value);
-    // delay(10);
-    digitalWrite(pin_greenLed, LOW);
+    delay(10);
+    digitalWrite(pin_yellowLed, LOW);
 }
 
 void button() {
@@ -116,12 +133,12 @@ void button() {
     if( buttonState != lastButtonState){
         if (!buttonState) {
             if(toggleValue){
-                digitalWrite(pin_buzzer, 1);
-                digitalWrite(pin_blueLed, 1);
+                // digitalWrite(pin_buzzer, 1);
+                digitalWrite(pin_redLed, 1);
 
             }else{
-                digitalWrite(pin_buzzer, 0);
-                digitalWrite(pin_blueLed, 0);
+                // digitalWrite(pin_buzzer, 0);
+                digitalWrite(pin_redLed, 0);
             }
             toggleValue = !toggleValue;
         }
@@ -151,6 +168,14 @@ int adc_to_lux(int adcValue) {
         luxValue = 1;
     }
     return luxValue;
+}
+
+int adc_to_temp(int adcValue){
+    // Determine the current resistance of the thermistor based on the sensor value.
+    float resistance = (float)(1023-adcValue)*10000/adcValue;
+    // Calculate the temperature based on the resistance value.
+    float temperature = 1/(log(resistance/10000)/B+1/298.15)-273.15;
+    return temperature;
 }
 
 void config_mrf(uint16_t panId, uint16_t address, uint8_t channel, boolean promiscuous, boolean palna) {
@@ -215,11 +240,11 @@ void read_command() {
 void do_command(uint8_t actuadorId, uint8_t command) {
     // Serial.println("actuadorId: " + String(actuadorId) + " command: " + String(command));
     switch (actuadorId) {
-        case actuador_blueLed:
+        case actuador_redLed:
             if (command == 1) {
-                digitalWrite(pin_blueLed, HIGH);
+                digitalWrite(pin_redLed, HIGH);
             } else {
-                digitalWrite(pin_blueLed, LOW);
+                digitalWrite(pin_redLed, LOW);
             }
             break;
 

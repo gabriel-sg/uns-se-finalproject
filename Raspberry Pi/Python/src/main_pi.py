@@ -28,7 +28,7 @@ pin_interrupt = 28
 mrf = mrf24j40.Mrf24j(pin_reset, pin_cs, pin_interrupt)
 
 ###### Test Functions ######
-run_test = 1
+run_test = 0
 
 totalRead = 0
 totalReadSucc = 0
