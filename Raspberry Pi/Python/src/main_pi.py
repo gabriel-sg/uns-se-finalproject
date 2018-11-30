@@ -172,24 +172,26 @@ def check_queue_action():
             while (mrf.get_txinfo().tx_ok != 1):
                 init_time_qa = int(round(time.time() * 1000))
                 if (m_data[0] == ADDR_NODO_1):
-                    if (m_data[2]):
-                        mrf.send_command(ADDR_NODO_1, m_data[1], 1)
-                    else:
-                        mrf.send_command(ADDR_NODO_1, m_data[1], 0)
+                    # if (m_data[2]):
+                    #     mrf.send_command(ADDR_NODO_1, m_data[1], 1)
+                    # else:
+                    #     mrf.send_command(ADDR_NODO_1, m_data[1], 0)
+                    mrf.send_command(ADDR_NODO_1, m_data[1], m_data[2])
                 elif (m_data[0] == ADDR_NODO_2):
-                    if (m_data[2]):
-                        mrf.send_command(ADDR_NODO_2, m_data[1], 1)
-                    else:
-                        mrf.send_command(ADDR_NODO_2, m_data[1], 0)
+                    # if (m_data[2]):
+                    #     mrf.send_command(ADDR_NODO_2, m_data[1], 1)
+                    # else:
+                    #     mrf.send_command(ADDR_NODO_2, m_data[1], 0)
+                    mrf.send_command(ADDR_NODO_2, m_data[1], m_data[2])
                 elif (m_data[0] == ADDR_NODO_3):
-                    if (m_data[2]):
-                        mrf.send_command(ADDR_NODO_3, m_data[1], 1)
-                    else:
-                        mrf.send_command(ADDR_NODO_3, m_data[1], 0)
+                    # if (m_data[2]):
+                    #     mrf.send_command(ADDR_NODO_3, m_data[1], 1)
+                    # else:
+                    #     mrf.send_command(ADDR_NODO_3, m_data[1], 0)
+                    mrf.send_command(ADDR_NODO_3, m_data[1], m_data[2])
                 init_time_qa = int(round(time.time() * 1000)) - init_time_qa
                 print("Comando enviado en: "+ str(init_time_qa))
-
-        # time.sleep(0.2)
+                time.sleep(0.2)
 
 ############ Stream DB Functions ############
 # NodoId - ActId - Accion

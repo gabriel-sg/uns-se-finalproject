@@ -1,4 +1,5 @@
 #include <mrf24j.h>
+#include <Servo.h>
 
 // Functions headers
 void interrupt_routine();
@@ -24,13 +25,20 @@ const int pin_interrupt = 2;  // default interrupt pin on ATmega8/168/328
 
 Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
+Servo groveServo;
+
 unsigned long last_time;
 unsigned long tx_interval = 2400;
 
 int luzValue = 0;
 // int tempValue = 0;
+int sensorPosition = 0;
+int shaftPosition = 0;
 int lastButtonState = 0;
 int toggleValue = 0;
+
+const int pinServo = 3;
+const int potentiometer = A2;
 
 int pin_redLed = 5;
 int pin_yellowLed = 4;
@@ -47,11 +55,12 @@ const int B = 3975;
 // ID actuadores
 const uint8_t actuador_redLed = 1;
 // const uint8_t actuador_buzzer = 2;
+const uint8_t actuador_servo = 2;
 
 void setup() {
     Serial.begin(9600);
 
-    int run_test = 1;
+    int run_test = 0;
     int cant_iteraciones_test = 5;
     int print_detalles = 0;
     if (run_test) {
@@ -87,6 +96,9 @@ void setup() {
     pinMode(pin_sensorLuz, INPUT);
     // Button
     // pinMode(pin_button, INPUT);
+    // Servo
+    groveServo.attach(pinServo);
+    pinMode(potentiometer,INPUT);
 }
 
 void interrupt_routine() {
@@ -105,7 +117,7 @@ void loop() {
         // Serial.println("Luminocidad: " + String(luzValue) + "\n");
         send_pkg(2, luzValue);
 
-        // delay(500);
+        // delay(15);
 
         // Tempreratura
         // tempValue = analogRead(pin_sensorTemp);
@@ -113,8 +125,13 @@ void loop() {
         //Serial.println("Tempretarura: " + String(tempValue) + "\n");
         // send_pkg(1, tempValue);
 
+        // Servo
         last_time = current_time;
     }
+    // sensorPosition = analogRead(potentiometer);
+    // shaftPosition = map(sensorPosition, 0, 1023, 0, 179);
+    // Use the Servo object to move the servo.
+    // groveServo.write(shaftPosition);
     // button();
 }
 
@@ -123,7 +140,7 @@ void send_pkg(byte sensorId, int value) {
     // Serial.println("rxxxing...");
     // Serial.println("txxxing...\n");
     mrf.send_value(0x6001, 0, sensorId, 1, value);
-    delay(10);
+    // delay(10);
     digitalWrite(pin_yellowLed, LOW);
 }
 
@@ -247,7 +264,9 @@ void do_command(uint8_t actuadorId, uint8_t command) {
                 digitalWrite(pin_redLed, LOW);
             }
             break;
-
+        case actuador_servo:
+            groveServo.write(command);
+            break;
         default:
             break;
     }
