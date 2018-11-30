@@ -136,11 +136,12 @@ MRF_UPNONCE12 = 0x24C
 MRF_I_RXIF = 0b00001000
 MRF_I_TXNIF = 0b00000001
 
+
 class rx_info_t:
     def __init__(self):
         self.frame_length = 0
         self.rx_data = []
-        for i in range(0,116):
+        for i in range(0, 116):
             self.rx_data.append(0)
         self.lqi = 0
         self.rssi = 0
@@ -148,11 +149,13 @@ class rx_info_t:
         self.srcaddr = 0
         self.destaddr = 0
 
+
 class tx_info_t:
     def __init__(self):
-        self.tx_ok = 1
+        self.tx_ok = 0
         self.retries = 2
         self.channel_busy = 1
+
 
 class Mrf24j:
 
@@ -168,14 +171,15 @@ class Mrf24j:
         self._pin_cs = pin_chip_select
         self._pin_int = pin_interrupt
 
-        wiringpi.pinMode(self._pin_reset,1)
-        wiringpi.pinMode(self._pin_cs,1)
-        wiringpi.pinMode(self._pin_int,0)
+        wiringpi.pinMode(self._pin_reset, 1)
+        wiringpi.pinMode(self._pin_cs, 1)
+        wiringpi.pinMode(self._pin_int, 0)
 
-        wiringpi.wiringPiSPISetup(0, 500000) # channel 0 (not used), 500 Khz / 2Mhz
+        # channel 0 (not used), 500 Khz / 2Mhz
+        wiringpi.wiringPiSPISetup(0, 500000)
 
         self.rx_buf = []
-        for i in range(0,127):
+        for i in range(0, 127):
             self.rx_buf.append(0)
 
         self.bytes_MHR = 9
@@ -193,9 +197,9 @@ class Mrf24j:
         self.tx_info = tx_info_t()
 
     def reset(self):
-        wiringpi.digitalWrite(self._pin_reset,0)
+        wiringpi.digitalWrite(self._pin_reset, 0)
         time.sleep(0.02)
-        wiringpi.digitalWrite(self._pin_reset,1)
+        wiringpi.digitalWrite(self._pin_reset, 1)
         time.sleep(0.02)
 
     def spi_transfer(self, byte):
@@ -206,40 +210,66 @@ class Mrf24j:
     def read_short(self, address):
         self.mrf_lock.acquire()
         wiringpi.digitalWrite(self._pin_cs, 0)
-        self.spi_transfer(address << 1 & 0b01111110)
-        ret = self.spi_transfer(0)
+        address = (address << 1) & 0b01111110
+        address = address & 0xFF
+        bytesToSend = bytes([address, 0])
+        rx_tuple = wiringpi.wiringPiSPIDataRW(0, bytesToSend)
+
+        # self.spi_transfer(address << 1 & 0b01111110)
+        # ret = self.spi_transfer(0)
         wiringpi.digitalWrite(self._pin_cs, 1)
         self.mrf_lock.release()
-        return ret
+        return rx_tuple[1][1]
 
     def read_long(self, address):
         self.mrf_lock.acquire()
         wiringpi.digitalWrite(self._pin_cs, 0)
-        ahigh = address >> 3
-        alow = address << 5
-        self.spi_transfer(0x80 | ahigh)
-        self.spi_transfer(alow)
-        ret = self.spi_transfer(0)
+
+        ahigh = (address >> 3) | 0x80
+        ahigh = ahigh & 0xFF
+        alow = (address << 5) & 0xFF
+        bytesToSend = bytes([ahigh, alow, 0])
+        rx_tuple = wiringpi.wiringPiSPIDataRW(0, bytesToSend)
+
+        # ahigh = address >> 3
+        # alow = address << 5
+        # self.spi_transfer(0x80 | ahigh)
+        # self.spi_transfer(alow)
+        # ret = self.spi_transfer(0)
         wiringpi.digitalWrite(self._pin_cs, 1)
         self.mrf_lock.release()
-        return ret
+        return rx_tuple[1][2]
 
     def write_short(self, address, data):
         self.mrf_lock.acquire()
         wiringpi.digitalWrite(self._pin_cs, 0)
-        self.spi_transfer((address<<1 & 0b01111110) | 0x01)
-        self.spi_transfer(data)
+        address = ((address << 1) & 0b01111110) | 0x01
+        address = address & 0xFF
+        data = data & 0xFF
+        bytesToSend = bytes([address, data])
+        wiringpi.wiringPiSPIDataRW(0, bytesToSend)
+
+        # self.spi_transfer((address<<1 & 0b01111110) | 0x01)
+        # self.spi_transfer(data)
         wiringpi.digitalWrite(self._pin_cs, 1)
         self.mrf_lock.release()
 
     def write_long(self, address, data):
         self.mrf_lock.acquire()
         wiringpi.digitalWrite(self._pin_cs, 0)
-        ahigh = address >> 3
-        alow = address << 5
-        self.spi_transfer(0x80 | ahigh)
-        self.spi_transfer(alow | 0x10)
-        self.spi_transfer(data)
+        ahigh = (address >> 3) | 0x80
+        alow = address << 5 | 0x10
+        ahigh = ahigh & 0xFF
+        alow = alow & 0xFF
+        data = data & 0xFF
+        bytesToSend = bytes([ahigh, alow, data])
+        wiringpi.wiringPiSPIDataRW(0, bytesToSend)
+
+        # ahigh = address >> 3
+        # alow = address << 5
+        # self.spi_transfer(0x80 | ahigh)
+        # self.spi_transfer(alow | 0x10)
+        # self.spi_transfer(data)
         wiringpi.digitalWrite(self._pin_cs, 1)
         self.mrf_lock.release()
 

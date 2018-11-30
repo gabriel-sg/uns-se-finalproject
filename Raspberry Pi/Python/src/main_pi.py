@@ -168,24 +168,28 @@ def check_queue_action():
     while not end_ta:
         if not (action_queue.empty()):
             m_data = action_queue.get()
-            init_time_qa = int(round(time.time() * 1000))
-            if (m_data[0] == ADDR_NODO_1):
-                if (m_data[2]):
-                    mrf.send_command(ADDR_NODO_1, m_data[1], 1)
-                else:
-                    mrf.send_command(ADDR_NODO_1, m_data[1], 0)
-            elif (m_data[0] == ADDR_NODO_2):
-                if (m_data[2]):
-                    mrf.send_command(ADDR_NODO_2, m_data[1], 1)
-                else:
-                    mrf.send_command(ADDR_NODO_2, m_data[1], 0)
-            elif (m_data[0] == ADDR_NODO_3):
-                if (m_data[2]):
-                    mrf.send_command(ADDR_NODO_3, m_data[1], 1)
-                else:
-                    mrf.send_command(ADDR_NODO_3, m_data[1], 0)
-            init_time_qa = int(round(time.time() * 1000)) - init_time_qa
-            print("Comando enviado en: "+ str(init_time_qa))
+            mrf.get_txinfo().tx_ok = 0
+            while (mrf.get_txinfo().tx_ok != 1):
+                init_time_qa = int(round(time.time() * 1000))
+                if (m_data[0] == ADDR_NODO_1):
+                    if (m_data[2]):
+                        mrf.send_command(ADDR_NODO_1, m_data[1], 1)
+                    else:
+                        mrf.send_command(ADDR_NODO_1, m_data[1], 0)
+                elif (m_data[0] == ADDR_NODO_2):
+                    if (m_data[2]):
+                        mrf.send_command(ADDR_NODO_2, m_data[1], 1)
+                    else:
+                        mrf.send_command(ADDR_NODO_2, m_data[1], 0)
+                elif (m_data[0] == ADDR_NODO_3):
+                    if (m_data[2]):
+                        mrf.send_command(ADDR_NODO_3, m_data[1], 1)
+                    else:
+                        mrf.send_command(ADDR_NODO_3, m_data[1], 0)
+                init_time_qa = int(round(time.time() * 1000)) - init_time_qa
+                print("Comando enviado en: "+ str(init_time_qa))
+
+        # time.sleep(0.2)
 
 ############ Stream DB Functions ############
 # NodoId - ActId - Accion
