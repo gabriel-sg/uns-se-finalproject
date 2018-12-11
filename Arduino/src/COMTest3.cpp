@@ -1,34 +1,174 @@
-// #include <Arduino.h>
+// /**
+//  * Example code for using a microchip mrf24j40 module to send and receive
+//  * packets using plain 802.15.4
+//  * Requirements: 3 pins for spi, 3 pins for reset, chip select and interrupt
+//  * notifications
+//  * This example file is considered to be in the public domain
+//  * Originally written by Karl Palsson, karlp@tweak.net.au, March 2011
+//  */
+// #include <SPI.h>
 // #include <mrf24j.h>
 
-// const int pin_reset = 8;
-// const int pin_cs = 6;        // default CS pin on ATmega8/168/328
-// const int pin_interrupt = 2;  // default interrupt pin on ATmega8/168/328
-
 // // Functions headers
-// void showInitReg();
-// void printShortReg(String name, int address, int shouldBeValue, int defaultValue);
-// void printLongReg(String name, int address, int shouldBeValue, int defaultValue);
+// void interrupt_routine();
+// void handle_rx();
+// void handle_tx();
+
+// void rw_test(int count, int print_detalles);
 // void testRW(int print, int* totalRead, int* totalSuccRead, int* totalWrite, int* totalSuccWrite);
 // int assertReadLong(String name, int address, int shouldBeValue, int print);
 // int assertReadShort(String name, int address, int shouldBeValue, int print);
 // int assertWriteShort(String name, int address, int toWriteValue, int print);
 // int assertWriteLong(String name, int address, int toWriteValue, int print);
+// void send_pkg(byte sensorId, int value);
+// void config_mrf(uint16_t panId, uint16_t address, uint8_t channel, boolean promiscuous, boolean palna);
+// void button();
+
+// const int pin_reset = 10;
+// const int pin_cs = 9;         // default CS pin on ATmega8/168/328
+// const int pin_interrupt = 2;  // default interrupt pin on ATmega8/168/328
 
 // Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
+// unsigned long last_time;
+// unsigned long tx_interval = 2000;
+
+// int luzValue = 0;
+
+// int pin_blueLed = 5;
+// int pin_greenLed = 4;
+// int pin_sensorLuz = A0;
+// int pin_button = 7;
+// int pin_buzzer = 3;
+
 // void setup() {
 //     Serial.begin(9600);
+
+//     int run_test = 1;
+//     int cant_iteraciones_test = 5;
+//     int print_detalles = 0;
+//     if(run_test){
+//         rw_test(cant_iteraciones_test, print_detalles);
+//     }
+
+//     uint16_t panId = 0xcafe;
+//     uint16_t address = 0x6003;
+//     uint8_t channel = 18;
+//     boolean promiscuous = false;
+//     boolean palna = true;
+//     config_mrf(panId, address, channel, promiscuous, palna);
+    
+//     Serial.print("PANID attached: ");
+//     Serial.print(mrf.get_pan(), HEX);
+//     Serial.println();
+//     Serial.print("My address: ");
+//     Serial.print(mrf.address16_read(), HEX);
+//     Serial.println("\n");
+
+//     last_time = millis();
+// }
+
+// void interrupt_routine() {
+//     mrf.interrupt_handler();  // mrf24 object interrupt routine
+// }
+
+// void loop() {
+//     mrf.check_flags(&handle_rx, &handle_tx);
+//     unsigned long current_time = millis();
+//     if ((current_time - last_time) > tx_interval) {
+//         mrf.send16(0x6002, "pepe");
+//         last_time = millis();
+//     }
+// }
+
+// void send_pkg(byte sensorId, int value){
+//     digitalWrite(pin_greenLed, HIGH);
+//     //Serial.println("rxxxing...");
+//     Serial.println("txxxing...\n");
+//     mrf.send_value(0x6001, 0, sensorId, 1, value);
+//     delay(10);
+//     digitalWrite(pin_greenLed, LOW);
+// }
+
+// void button(){
+//     int buttonState = digitalRead(pin_button);
+//     if(buttonState == 1){
+//         digitalWrite(pin_buzzer, HIGH);
+//         digitalWrite(pin_blueLed, HIGH);
+//     }
+//     else{
+//         digitalWrite(pin_buzzer, LOW);
+//         digitalWrite(pin_blueLed, LOW);
+//     }
+// }
+
+// void config_mrf(uint16_t panId, uint16_t address, uint8_t channel, boolean promiscuous, boolean palna){
+//     noInterrupts();
+//     mrf.reset();
+//     mrf.init();
+//     mrf.set_pan(panId);
+//     // This is _our_ address
+//     mrf.address16_write(address);
+//     mrf.set_channel(channel);
+//     // uncomment if you want to receive any packet on this channel
+//     mrf.set_promiscuous(promiscuous);
+//     // uncomment if you want to enable PA/LNA external control
+//     mrf.set_palna(palna);
+//     // uncomment if you want to buffer all PHY Payload
+//     //mrf.set_bufferPHY(true);
+//     mrf.set_interrupts();
+//     attachInterrupt(0, interrupt_routine, CHANGE);  // interrupt 0 equivalent to pin 2(INT0) on ATmega8/168/328
+//     interrupts();
+// }
+
+// void handle_rx() {
+//     Serial.print("received a packet ");
+//     Serial.print(mrf.get_rxinfo()->frame_length, DEC);
+//     Serial.println(" bytes long");
+
+//     if (mrf.get_bufferPHY()) {
+//         Serial.println("Packet data (PHY Payload):");
+//         for (int i = 0; i < mrf.get_rxinfo()->frame_length; i++) {
+//             Serial.print(mrf.get_rxbuf()[i]);
+//         }
+//     }
+
+//     Serial.println("ASCII data (relevant data):");
+//     for (int i = 0; i < mrf.rx_datalength(); i++) {
+//         Serial.write(mrf.get_rxinfo()->rx_data[i]);
+//     }
+//     Serial.println("\r\nBytes data:");
+//     for (int i = 0; i < mrf.rx_datalength(); i++) {
+//         Serial.print(String(mrf.get_rxinfo()->rx_data[i])+"-");
+//     }
+
+//     Serial.print("\r\nLQI/RSSI=");
+//     Serial.print(mrf.get_rxinfo()->lqi, DEC);
+//     Serial.print("/");
+//     Serial.println(mrf.get_rxinfo()->rssi, DEC);
+//     Serial.println();
+// }
+
+// void handle_tx() {
+//     if (mrf.get_txinfo()->tx_ok) {
+//         Serial.println("TX went ok, got ack\n");
+//     } else {
+//         Serial.print("TX failed after ");
+//         Serial.print(mrf.get_txinfo()->retries);
+//         Serial.println(" retries\n");
+//     }
+// }
+
+// void rw_test(int count, int print_detalles) {
 //     int totalRead = 0, totalReadSucc = 0, totalWrite = 0, totalWriteSucc = 0;
 //     int auxTotalRead, auxTotalReadSucc, auxTotalWrite, auxTotalWriteSucc;
 
 //     Serial.println("\nRealizando test de lectura y escritura...");
 
-//     size_t count = 100;
 //     unsigned int testDuration = millis();
 //     for (size_t i = 0; i < count; i++) {
 //         mrf.reset();
-//         testRW(0, &auxTotalRead, &auxTotalReadSucc, &auxTotalWrite, &auxTotalWriteSucc);
+//         testRW(print_detalles, &auxTotalRead, &auxTotalReadSucc, &auxTotalWrite, &auxTotalWriteSucc);
 //         totalRead += auxTotalRead;
 //         totalReadSucc += auxTotalRead;
 //         totalWrite += auxTotalWrite;
@@ -49,10 +189,7 @@
 //     Serial.println();
 //     Serial.println("-------------------------------------------");
 // }
-
-// void loop() {
-// }
-
+// // Test Functions
 // void testRW(int print, int* totalRead, int* totalSuccRead, int* totalWrite, int* totalSuccWrite) {
 //     unsigned long init_time;
 //     // Read some short and long address registers and compare it with their default value.
@@ -145,87 +282,4 @@
 //         Serial.println(name + ": read value: " + String(readValue) + ", should be: " + String(shouldBeValue));
 //     }
 //     return shouldBeValue == readValue;
-// }
-
-// void showInitReg() {
-//     //    write_short(MRF_PACON2, 0x98); // – Initialize FIFOEN = 1 and TXONTS = 0x6.
-//     printShortReg("MRF_PACON2", MRF_PACON2, 0x98, 0b10001000);
-
-//     //    write_short(MRF_TXSTBL, 0x95); // – Initialize RFSTBL = 0x9.
-//     printShortReg("MRF_TXSTBL", MRF_TXSTBL, 0x95, 0b01110101);
-
-//     // Long addresses
-
-//     // The unique long address register with non cero default value.
-//     printLongReg("TEST", 0x222, 0xAAA, 0b00001010);
-
-//     //    write_long(MRF_RFCON0, 0x03); // – Initialize RFOPT = 0x03.
-//     printLongReg("MRF_RFCON0", MRF_RFCON0, 0x03, 0b00000000);
-
-//     //    write_long(MRF_RFCON1, 0x01); // – Initialize VCOOPT = 0x02.
-//     printLongReg("MRF_RFCON1", MRF_RFCON1, 0x01, 0b00000000);
-
-//     //    write_long(MRF_RFCON2, 0x80); // – Enable PLL (PLLEN = 1).
-//     printLongReg("MRF_RFCON2", MRF_RFCON2, 0x80, 0b00000000);
-
-//     //    write_long(MRF_RFCON6, 0x90); // – Initialize TXFIL = 1 and 20MRECVR = 1.
-//     printLongReg("MRF_RFCON6", MRF_RFCON6, 0x90, 0b00000000);
-
-//     //    write_long(MRF_RFCON7, 0x80); // – Initialize SLPCLKSEL = 0x2 (100 kHz Internal oscillator).
-//     printLongReg("MRF_RFCON7", MRF_RFCON7, 0x80, 0b0000000);
-
-//     //    write_long(MRF_RFCON8, 0x10); // – Initialize RFVCO = 1.
-//     printLongReg("MRF_RFCON8", MRF_RFCON8, 0x10, 0b00000000);
-
-//     //    write_long(MRF_SLPCON1, 0x21); // – Initialize CLKOUTEN = 1 (disabled) and SLPCLKDIV = 0x01.
-//     printLongReg("MRF_SLPCON1", MRF_SLPCON1, 0x21, 0b00000000);
-
-//     //    //  Configuration for nonbeacon-enabled devices (see Section 3.8 “Beacon-Enabled and
-//     //    //  Nonbeacon-Enabled Networks”):
-//     //    write_short(MRF_BBREG2, 0x80); // Set CCA mode to ED
-//     printShortReg("MRF_BBREG2", MRF_BBREG2, 0x80, 0b01001000);
-
-//     //    write_short(MRF_CCAEDTH, 0x60); // – Set CCA ED threshold.
-//     printShortReg("MRF_CCAEDTH", MRF_CCAEDTH, 0x60, 0b00000000);
-
-//     //    write_short(MRF_BBREG6, 0x40); // – Set appended RSSI value to RXFIFO.
-//     printShortReg("MRF_BBREG6", MRF_BBREG6, 0x41, 0b00000001);
-//     //  El primer bit es solo de escritura (es cambiado a 0 automaticamente por hw) y el ultimo de lectura
-
-//     //    set_interrupts();
-//     //      interrupts for rx and tx normal complete
-//     //      write_short(MRF_INTCON, 0b11110110);
-//     printShortReg("MRF_INTCON", MRF_INTCON, 0b11110110, 0b11111111);
-
-//     //    set_channel(12);
-//     //      default chanel 11
-//     //      write_long(MRF_RFCON0, (((channel - 11) << 4) | 0x03));
-//     printLongReg("MRF_RFCON0", MRF_RFCON0, 0b00010011, 0b00000000);
-
-//     //    // max power is by default.. just leave it...
-//     //    // Set transmitter power - See “REGISTER 2-62: RF CONTROL 3 REGISTER (ADDRESS: 0x203)”.
-
-//     //    write_short(MRF_RFCTL, 0x04); //  – Reset RF state machine.
-//     //    write_short(MRF_RFCTL, 0x00); // part 2
-//     printShortReg("MRF_RFCTL", MRF_RFCTL, 0x00, 0b00000000);
-// }
-
-// void printShortReg(String name, int address, int shouldBeValue, int defaultValue) {
-//     Serial.print(name + ": ");
-//     Serial.print("shouldBeValue: 0x");
-//     Serial.print(mrf.read_short(address), HEX);
-//     Serial.print(", default: 0x");
-//     Serial.print(defaultValue, HEX);
-//     Serial.print(", should be: 0x");
-//     Serial.println(shouldBeValue, HEX);
-// }
-
-// void printLongReg(String name, int address, int shouldBeValue, int defaultValue) {
-//     Serial.print(name + ": ");
-//     Serial.print("shouldBeValue: 0x");
-//     Serial.print(mrf.read_long(address), HEX);
-//     Serial.print(", default: 0x");
-//     Serial.print(defaultValue, HEX);
-//     Serial.print(", should be: 0x");
-//     Serial.println(shouldBeValue, HEX);
 // }

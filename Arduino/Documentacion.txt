@@ -2,16 +2,15 @@ Arduino:
     - No necesitamos una fuente extra de 3.3V, con la alimentación de Arduino alcanza.
     - Test de alcance realizado con KristiNote. OK
         * Max 40 mts aprox. (con paredes en el medio).
+        * 250 mts al aire libre.
     - Test de LQI (Link Quality Indicator) y RSSI (Received Signal Strength Indicator).
         * Recipiente Test OK.
         * Ollas Essen Test OK.
-    
-
 
 MRF24J40:
     SPI:
         -Mode 0
-        -The CSpin must be held low while communicating with the MRF24J40
+        -The CS pin must be held low while communicating with the MRF24J40
         -Max speed 20Mhz (for low frecuencies we have bits errors in transmition, the best low frec. is 4 Mhz).
         -bit order: MSb
 
@@ -20,22 +19,20 @@ MRF24J40:
         to provide a high-impedance signal to the SPI bus. See Section 4.4 “MRF24J40 Schematic and
         Bill of Materials”for an example application circuit.
 
-    - Los cambios en los módulos MRF24J40 tardan unos minutos en reflejar.
-
     - En la transmisión se envían mínimamente (9 + 2) bytes + payload.
 
     - Luego de cambiar la frecuencia del canal (set_channel), hay que reiniciar RF State Machine y esperar 192 us
 
-Tener conectado CS y RST con los pines de la libreria sino no funciona al arrancar.
+Tener conectado CS y RST en los pines correspondientes sino no funciona el mrf.
 No usar CS directo a tierra y/o RST a VCC.
-
-Python:
-
-    * TODO: Enviar todo como String o enteros
-
 
 msg_type:
     0 = sensor
     1 = comando
 
-Con el starter kit no se pueden usar los pines 0 y 1.
+Con el Grove Seeed - starter kit no se pueden usar los pines 0 y 1.
+
+* Decisión de diseño
+    Los nodos envían información sin necesidad de ser solicitada por el coordinador
+    El coordinador recibe éstos datos y se encarga de almacenarlos en la base de datos.
+    El coordinador puede indicar directivas (recibidas de la base de datos) a los nodos a fin de accionar actuadores.

@@ -31,7 +31,7 @@
 // Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
 // unsigned long last_time;
-// unsigned long tx_interval = 5000;
+// unsigned long tx_interval = 1000;
 
 // int luzValue = 0;
 
@@ -52,7 +52,7 @@
 //     }
 
 //     uint16_t panId = 0xcafe;
-//     uint16_t address = 0x6003;
+//     uint16_t address = 0x6002;
 //     uint8_t channel = 18;
 //     boolean promiscuous = false;
 //     boolean palna = true;
@@ -66,20 +66,6 @@
 //     Serial.println("\n");
 
 //     last_time = millis();
-
-//     // Set led (transfer indicator)
-//     pinMode(pin_greenLed, OUTPUT);
-//     digitalWrite(pin_greenLed, LOW);
-//     // Set led (como actuador)
-//     pinMode(pin_blueLed, OUTPUT);
-//     digitalWrite(pin_blueLed, LOW);
-//     // Buzzer
-//     pinMode(pin_buzzer, OUTPUT);
-//     digitalWrite(pin_buzzer, LOW);
-//     // Set sensor luz
-//     pinMode(pin_sensorLuz, INPUT);
-//     // Button
-//     pinMode(pin_button, INPUT);
 // }
 
 // void interrupt_routine() {
@@ -88,17 +74,6 @@
 
 // void loop() {
 //     mrf.check_flags(&handle_rx, &handle_tx);
-//     unsigned long current_time = millis();
-//     if ((current_time - last_time) > tx_interval) {
-//         // Luz
-//         noInterrupts();
-//         luzValue = analogRead(A0);
-//         interrupts();
-//         Serial.println("Luminocidad: "+ String(luzValue)+"\n");
-//         send_pkg(2, luzValue);        
-//         last_time = current_time;
-//     }
-//     button();
 // }
 
 // void send_pkg(byte sensorId, int value){
@@ -157,10 +132,10 @@
 //     for (int i = 0; i < mrf.rx_datalength(); i++) {
 //         Serial.write(mrf.get_rxinfo()->rx_data[i]);
 //     }
-//     Serial.println("\r\nBytes data:");
-//     for (int i = 0; i < mrf.rx_datalength(); i++) {
-//         Serial.print(String(mrf.get_rxinfo()->rx_data[i])+"-");
-//     }
+//     // Serial.println("\r\nBytes data:");
+//     // for (int i = 0; i < mrf.rx_datalength(); i++) {
+//     //     Serial.print(String(mrf.get_rxinfo()->rx_data[i])+"-");
+//     // }
 
 //     Serial.print("\r\nLQI/RSSI=");
 //     Serial.print(mrf.get_rxinfo()->lqi, DEC);

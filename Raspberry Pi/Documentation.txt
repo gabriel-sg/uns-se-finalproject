@@ -1,0 +1,20 @@
+MRF24J40:
+    SPI:
+        -Mode 0
+        -The CS pin must be held low while communicating with the MRF24J40.
+        -Max speed 4 Mhz (In our case).
+        -bit order: MSb
+
+        Note: The SDO pin 17 defaults to a low state when CS is high (the MRF24J40 is not selected).
+        If the MRF24J40 is to share a SPI bus, a tri-state buffer should be placed on the SDO signal
+        to provide a high-impedance signal to the SPI bus. See Section 4.4 “MRF24J40 Schematic and
+        Bill of Materials”for an example application circuit.
+
+Don´t connect CS to ground or RST to VCC. They must be connected with their corresponding pins.
+
+We use a python wrapper for the Wiring Pi library.
+
+* Decisión de diseño
+    Los nodos envían información sin necesidad de ser solicitada por el coordinador
+    El coordinador recibe éstos datos y se encarga de almacenarlos en la base de datos.
+    El coordinador puede indicar directivas (recibidas de la base de datos) a los nodos a fin de accionar actuadores.

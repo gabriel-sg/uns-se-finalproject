@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import sys
-import os
+# import sys
+# import os
 import threading
 import wiringpi
 import time
@@ -15,7 +15,6 @@ ADDR_NODO_2 = 0x6002
 ADDR_NODO_3 = 0x6003
 
 ###### Init wiringPi lib ######
-
 wiringpi.wiringPiSetup() # wiringpi pin's number
 
 ###### Raspberry Pi GPIO ######
@@ -121,7 +120,6 @@ def interrupt_routine():
 
 def handle_rx():
     # print("received a packet {} bytes long\n".format(mrf.get_rxinfo().frame_length))
-
     if (mrf.get_bufferPHY()):
         print("Packet data (PHY Payload):\n")
         for i in range(0,mrf.get_rxinfo().frame_length):
@@ -203,7 +201,7 @@ init_f13 = 1
 init_f14 = 1
 def f11(mensaje):
     global init_f11
-    if init_f11:
+    if init_f11: # A simple flag to discard the first call.
         init_f11 = 0
     else:
         data = mensaje["data"]
@@ -318,7 +316,6 @@ def f34(mensaje):
         action_queue.put(arr)
 
 ################## MAIN ##################
-
 last_time = 0
 tx_interval = 1000
 data_queue = queue.Queue()
@@ -422,23 +419,5 @@ print("Finalizado.")
 
 ############ END MAIN ############
 
-# def clear_all():
-#     """Clears all the variables from the workspace of the spyder application."""
-#     gl = globals().copy()
-#     for var in gl:
-#         if var[0] == '_': continue
-#         if 'func' in str(globals()[var]): continue
-#         if 'module' in str(globals()[var]): continue
 
-#         del globals()[var]
 
-# def restart_program():
-#     python = sys.executable
-#     os.execl(python, python, * sys.argv)
-
-# if __name__ == "__main__":
-#     answer = input("Do you want to restart this program ? ")
-#     if answer.lower().strip() in "y yes".split():
-#         restart_program()
-#     else:
-#         clear_all()
