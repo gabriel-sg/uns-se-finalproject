@@ -1,0 +1,42 @@
+<h2>Nodo Estandar</h2>
+
+<div class="row">
+  <div class="col-xxxl-3 col-xxl-4 col-lg-4 col-md-6 col-offset-2">
+    <ngx-sensor-display
+      [title]="'Luminosidad'"
+      [value]='(sensor2 | async)?.Val'
+      [unit_name]="'Lux'"
+      [unit_symbol]="'none'"
+      [minValue]=1
+      [maxValue]=100
+      [displayOff]=false
+    ></ngx-sensor-display>
+  </div>
+  <div class="col-xxxl-3 col-xxl-4 col-lg-4 col-md-6 col-offset-2">
+    <ngx-sensor-display
+      [title]="'Servo'"
+      [value]="gradosServo"
+      (valueChange)="onValueChange($event)"
+      [unit_name]="'Grados'"
+      [unit_symbol]="'temperature'"
+      [minValue]=1
+      [maxValue]=155
+      [displayOff]=false
+    ></ngx-sensor-display>
+  </div>
+  <div class="col-xxxl-3 col-md-4" >
+    <div class="row" *ngFor="let statusCard of statusCards">
+      <div class="col-12">
+          <ngx-status-card (click)="toggle(statusCard)"
+        [title]="statusCard.title"
+        [type]="statusCard.type"
+        [on]="statusCard.status">
+        <i [ngClass]="statusCard.iconClass"></i>
+          </ngx-status-card>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+

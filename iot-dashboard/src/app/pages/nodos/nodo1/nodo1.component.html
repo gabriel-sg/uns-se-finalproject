@@ -1,0 +1,84 @@
+
+<h2>Nodo 1</h2>
+
+<div class="row">
+  <div class="col-xxxl-3 col-md-6" *ngFor="let statusCard of statusCards">
+    <ngx-status-card (click)="toggle(statusCard)"
+      [title]="statusCard.title"
+      [type]="statusCard.type"
+      [on]="statusCard.status">
+      <i [ngClass]="statusCard.iconClass"></i>
+    </ngx-status-card>
+  </div>
+</div>
+<!-- <div class="col">
+  <div class="row">
+    <h4>Actuadores</h4>
+  </div>
+  <div class="row">
+    <p>Estado en db del actuador 1 : {{ (actuador1 | async)?.Estado}}</p>
+  </div>
+  <div class="row">
+    <p>Estado en db del actuador 2 : {{ (actuador2 | async)?.Estado}}</p>
+  </div>
+  <div class="row">
+    <p>Estado en db del actuador 3 : {{ (actuador3 | async)?.Estado}}</p>
+  </div>
+  <div class="row">
+    <p>Estado en db del actuador 4 : {{ (actuador4 | async)?.Estado}}</p>
+  </div>
+</div> -->
+
+  <div class="row">
+    <div class="col-xxxl-3 col-xxl-4 col-lg-4 col-md-6">
+      <ngx-sensor-display
+        [title]="'Temperatura'"
+        [value]='(sensor1 | async)?.Val'
+        [unit_name]="'Celsius'"
+        [unit_symbol]="'temperature'"
+        [minValue]=0
+        [maxValue]=100
+        [displayOff]=false
+      ></ngx-sensor-display>
+    </div>
+    <div class="col-xxxl-3 col-xxl-4 col-lg-4 col-md-6">
+      <ngx-sensor-display
+        [title]="'Luminocidad'"
+        [value]='(sensor2 | async)?.Val'
+        [unit_name]="'Lux'"
+        [unit_symbol]="'none'"
+        [minValue]=1
+        [maxValue]=100
+        [displayOff]=false
+      ></ngx-sensor-display>
+    </div>
+    <div class="col-xxxl-3 col-xxl-4 col-lg-4 col-md-6">
+      <ngx-sensor-display
+        [title]="'Sin uso'"
+        [value]='0'
+        [unit_name]="''"
+        [unit_symbol]="'none'"
+        [minValue]=0
+        [maxValue]=100
+        [displayOff]=true
+      ></ngx-sensor-display>
+    </div>
+  </div>
+
+
+<!-- <div class="col">
+  <div class="row">
+    <h4>Sensores</h4>
+  </div>
+  <div class="row">
+    <p>Sensor 1 = {{ (sensor1 | async)?.Val }} </p>
+  </div>
+
+  <div class="row">
+    <p>Sensor 2 = {{ (sensor2 | async)?.Val }} </p>
+  </div>
+
+  <div class="row">
+    <p>Sensor 3 = {{ (sensor3 | async)?.Val }} </p>
+  </div>
+</div> -->

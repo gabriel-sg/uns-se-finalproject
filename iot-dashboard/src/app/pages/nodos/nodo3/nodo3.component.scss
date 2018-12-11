@@ -1,0 +1,25 @@
+@import '../../../@theme/styles/themes';
+@import '~bootstrap/scss/mixins/breakpoints';
+@import '~@nebular/theme/styles/global/breakpoints';
+
+@include nb-install-component() {
+
+  nb-card-body {
+    height: 215px;
+  }
+  // #title{
+  //   text-align: center;
+  // }
+
+  h3 {
+    width: 100%;
+    margin: 0;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    //text-align: center;
+  }
+
+
+
+
+}
