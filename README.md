@@ -24,3 +24,4 @@ This project is about controlling 3 Mrf24j40MB module (802.15.4 radio) that are 
 * <a href="http://wiringpi.com/">WiringPi</a>, a PIN based GPIO access library written in C for Raspberry PI.
 * WiringPi-Python, Unofficial Python-wrapped version of Gordon Henderson's WiringPi version 2 [GitHub](https://github.com/WiringPi/WiringPi-Python).
 * Pyrebase, a simple python wrapper for the Firebase API [GitHub](https://github.com/thisbejim/Pyrebase).
+* Big thanks to <a href="https://www.akveo.com">Akveo</a> for their great admin dashboard template [GitHub](https://github.com/akveo/ngx-admin)
