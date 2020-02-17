@@ -13,10 +13,10 @@ This project is about controlling 3 Mrf24j40MB module (IEEE 802.15.4) that are c
 * Salazar Gisbert Gabriel
 
 ### Technologies
-* Mrf24j40MB (802.15.4 module)
-* Raspberry Pi 3 B
+* Mrf24j40MB (IEEE 802.15.4)
+* Raspberry Pi 3B
 * Arduino Uno
-* Firebase
+* Firebase realtime database
 * Angular 7
 
 ### Sources and Acknowledgements
