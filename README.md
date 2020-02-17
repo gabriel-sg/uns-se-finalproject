@@ -6,7 +6,7 @@
 Final assignment for the Embedded Systems course, at **Universidad Nacional del Sur**.
 
 ### Description
-This project is about controlling 3 Mrf24j40MB module (802.15.4 radio) that are connected to the SPI hardware interface of 2 Arduino and a Raspberry PI. We used the arduinos as the leaf nodes of the network to sense values and send it to the coordinator node (Raspberry). This one is connected to the internet and retransmit the values to a database, in this case Firebase. Finally we show the information on a web dashboard. We also allow to send commands from the web page, like turn on/off or a value, to any nodes in the network.
+This project is about controlling 3 Mrf24j40MB module (IEEE 802.15.4) that are connected to the SPI hardware interface of two Arduino and one Raspberry PI. We used the arduinos as the leaf nodes of the network to read sensors values and send it to the coordinator node (Raspberry). The coordinator is connected to the internet and retransmit the values to a database, in this case Firebase. Then the information is displayed in a web dashboard. Moreover, commands can be sent from the web page to any nodes in the network (e.g turning on/off a motor or lights, change settings remotly, etc).
 
 ### Team
 * Fassi Jeremias
